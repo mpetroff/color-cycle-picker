@@ -47,9 +47,9 @@ body {
     height: 300px;
 }
 
-#vizLightness, #vizLightnessColor, #lightnessBar {
+#vizLightness {
     width: 300px;
-    height: 20px;
+    height: 60px;
     display: block;
 }
 
@@ -63,6 +63,21 @@ body {
   top: 0;
   left: 0;
 }
+
+#sliderTrackOverlay {
+  pointer-events: stroke;
+  stroke-width: 20px;
+  stroke: transparent;
+  cursor: crosshair;
+}
+
+#sliderHandle {
+  fill: #fff;
+  stroke: #000;
+  stroke-opacity: 0.5;
+  stroke-width: 1.25px;
+}
+
 </style>
 
 </head>
@@ -77,10 +92,7 @@ body {
         <canvas id="canvas" width="300" height="300"></canvas>
         <svg id="colorDots" width="300" height="300"></svg>
       </div>
-      <input type="range" min="35" max="95" value="50" style="width: 300px; margin: 0; padding: 0;" id="slider"><br>
-      <canvas id="lightnessBar" width="300" height="1"></canvas>
-      <svg id="vizLightness"></svg>
-      <svg id="vizLightnessColor"></svg>
+      <svg id="vizLightness" width="300" height="60"></svg>
     </div> <!-- col-sm -->
     <div class="col-sm-3">
       <ul class="list-group" id="swatchlist"></ul>
@@ -106,19 +118,16 @@ body {
   </div> <!-- row -->
 </div> <!-- container -->
 
-<script src="https://d3js.org/d3-color.v1.min.js"></script>
-<script src="https://d3js.org/d3-selection.v1.min.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="d3-cam02.js"></script>
 <script src="Sortable.min.js"></script>
 <script src="shader.js"></script>
 
 <script>
 var canvas = document.getElementById('canvas');
-var slider = document.getElementById('slider');
 var swatchList = document.getElementById('swatchlist');
 var colorDots = document.getElementById('colorDots');
-var lightnessBar = document.getElementById('lightnessBar');
-slider.onchange = render;
+var sliderVal = 35;
 
 Sortable.create(swatchList, {
     //filter: '.js-remove',
@@ -164,7 +173,7 @@ function coordToJab(coords) {
         height = canvas.height,
         x = coords[0],
         y = coords[1];
-    return d3.jab(Number(slider.value), x/width * 100 - 50, (height - y)/height * 100 - 50);
+    return d3.jab(sliderVal, x/width * 100 - 50, (height - y)/height * 100 - 50);
 }
 
 
@@ -186,12 +195,6 @@ d3.select('#colorDots').on('mousemove', function() {
     
 });
 
-d3.select('#lightnessBar').on('mousemove', mouseHover);
-function mouseHover() {
-    webglRender(d3.mouse(this)[0] / this.width * (95-35) + 35);
-}
-d3.select('#lightnessBar').on('mouseout', render);
-
 function colorToHex(c) {
     var r = Math.round(c.r).toString(16),
         g = Math.round(c.g).toString(16),
@@ -201,6 +204,12 @@ function colorToHex(c) {
     b = b.length == 1 ? 0 + b : b;
     return '#' + r + g + b;
 }
+
+var vizLightness = d3.select("#vizLightness");
+var vizLightnessGray = vizLightness.append("g")
+    .attr("transform", "translate(0," + 20 + ")");
+var vizLightnessColor = vizLightness.append("g")
+    .attr("transform", "translate(0," + 40 + ")");
 
 function updateViz(c) {
     // Large swatches
@@ -285,7 +294,7 @@ function updateViz(c) {
         .attr("fill", d => d.rgb().toString());
 
     // Vertical line swatches for lightness visualization
-    var swatches = d3.select('#vizLightness');
+    var swatches = vizLightnessGray;
     // Update contents
     var rects = swatches.selectAll("rect")
       .data(c);
@@ -295,9 +304,9 @@ function updateViz(c) {
         .attr("width", 2)
         .attr("height", 20)
       .merge(rects)
-        .attr("x", d => (d.J - slider.min) / (slider.max - slider.min + 1) * (canvas.width - 8) + 6)
+        .attr("x", d => sliderScale(d.J) + sliderMargin.left - 1)
         .attr("fill", d => d3.jab(d.J, 0, 0).rgb().toString());
-    var swatches = d3.select('#vizLightnessColor');
+    var swatches = vizLightnessColor;
     // Update contents
     var rects = swatches.selectAll("rect")
       .data(c);
@@ -307,7 +316,7 @@ function updateViz(c) {
         .attr("width", 2)
         .attr("height", 20)
       .merge(rects)
-        .attr("x", d => (d.J - slider.min) / (slider.max - slider.min + 1) * (canvas.width - 8) + 6)
+        .attr("x", d => sliderScale(d.J) + sliderMargin.left - 1)
         .attr("fill", d => d.rgb().toString());
 
     // Update output text area
@@ -395,28 +404,65 @@ function mouseClick() {
     //}
 }*/
 function render() {
-    webglRender(slider.value);
+    webglRender(sliderVal);
 }
 
-function renderLightnessBar() {
-    var width = lightnessBar.width,
-        ctx = lightnessBar.getContext('2d'),
-        image = ctx.createImageData(width, 1),
-        i = 0;
-    
-    for (var x = 0; x < width; x++) {
-        var c = d3.jab(x / width * (95-35) + 35, 0, 0).rgb();
-        image.data[i++] = c.r;
-        image.data[i++] = c.g;
-        image.data[i++] = c.b;
-        image.data[i++] = 255;
-    }
+var sliderMargin = {right: 10, left: 10},
+    sliderWidth = +vizLightness.attr("width") - sliderMargin.left - sliderMargin.right,
+    sliderHeight = 20;
 
-    ctx.putImageData(image, 0, 0);
+var sliderGradient = vizLightness.append("defs").append("linearGradient")
+   .attr("id", "grad")
+   .attr("x1", "0%")
+   .attr("x2", "100%")
+   .attr("y1", "0%")
+   .attr("y2", "0%")
+   .attr("gradientUnits", "userSpaceOnUse");
+sliderGradient.append("stop")
+   .attr("offset", "0%")
+   .attr("style", "stop-color: hsl(0, 0%, 35%);");
+sliderGradient.append("stop")
+   .attr("offset", "100%")
+   .attr("style", "stop-color: hsl(0, 0%, 95%);");
+
+var sliderScale = d3.scaleLinear()
+    .domain([35, 95])
+    .range([0, sliderWidth])
+    .clamp(true);
+
+var slider = vizLightness.append("g")
+    .attr("class", "slider")
+    .attr("transform", "translate(" + sliderMargin.left + "," + sliderHeight / 2+ ")");
+slider.append("line")
+    .attr("class", "track-inset")
+    .attr("x1", sliderScale.range()[0])
+    .attr("x2", sliderScale.range()[1])
+    .attr("stroke", "url(#grad)")
+    .attr("stroke-width", 10);
+var trackOverlay = slider.append("line")
+    .attr("id", "sliderTrackOverlay")
+    .attr("x1", sliderScale.range()[0])
+    .attr("x2", sliderScale.range()[1])
+    .call(d3.drag()
+        .on("start.interrupt", function() { slider.interrupt(); })
+        .on("start drag", function() { adjustSlider(sliderScale.invert(d3.event.x)); }));
+
+function adjustSlider(val) {
+  sliderVal = val;
+  sliderHandle.attr("cx", sliderScale(val));
+  webglRender(val);
 }
+
+trackOverlay.on('mousemove', function() {
+    webglRender(sliderScale.invert(d3.mouse(this)[0]));
+});
+trackOverlay.on('mouseout', render);
+
+var sliderHandle = slider.insert("circle", "#sliderTrackOverlay")
+    .attr("id", "sliderHandle")
+    .attr("r", 8.75);
 
 webglInit(canvas);
-render();
-renderLightnessBar();
+adjustSlider(60);   // Sets inital lightness and renders visualization
 </script>
 </body>
