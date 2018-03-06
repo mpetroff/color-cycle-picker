@@ -39,7 +39,7 @@ function webglInit(canvas) {
     gl.enableVertexAttribArray(program.texCoordLocation);
 
     // Provide texture coordinates for rectangle
-    var texCoordBuffer = gl.createBuffer();
+    const texCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,1,1,1,1,-1,-1,1,1,-1,-1,-1]), gl.STATIC_DRAW);
     gl.vertexAttribPointer(program.texCoordLocation, 2, gl.FLOAT, false, 0, 0);
@@ -51,11 +51,11 @@ function webglRender(J) {
     gl.uniform1f(u, J);
     
     // Set existing colors
-    var colorArray = Array(256*3);
+    let colorArray = Array(256*3);
     colorArray.fill(-1000);
-    var n = 0;
-    for (var i = 0; i < colors.length; i++) {
-        for (var j = 0; j < colors[i].length; j++) {
+    let n = 0;
+    for (let i = 0; i < colors.length; i++) {
+        for (let j = 0; j < colors[i].length; j++) {
             colorArray[n++] = colors[i][j].J;
             colorArray[n++] = colors[i][j].a;
             colorArray[n++] = colors[i][j].b;
@@ -69,7 +69,7 @@ function webglRender(J) {
 }
 
 function initUniforms() {    
-    var u = gl.getUniformLocation(program, 'CIECAM02_VC_n');
+    let u = gl.getUniformLocation(program, 'CIECAM02_VC_n');
     gl.uniform1f(u, CIECAM02_VC.n);
     u = gl.getUniformLocation(program, 'CIECAM02_VC_c');
     gl.uniform1f(u, CIECAM02_VC.c);
@@ -102,7 +102,7 @@ function initUniforms() {
  */
 
 // Vertex shader
-var vertexShader = [
+const vertexShader = [
 'attribute vec2 a_texCoord;',
 'varying vec2 v_texCoord;',
 
@@ -116,7 +116,7 @@ var vertexShader = [
 ].join('');
 
 
-var fragmentShader = `
+const fragmentShader = `
 precision mediump float;
 const float PI = 3.14159265358979323846264;
 
@@ -313,8 +313,8 @@ void main() {
 
 
 // CIECAM02_VC viewing conditions; assumes average viewing conditions
-var CIECAM02_VC = (function() {
-  var vc = {
+const CIECAM02_VC = (function() {
+  const vc = {
     D65_X: 95.047, // D65 standard referent
     D65_Y: 100.0,
     D65_Z: 108.883,
@@ -339,7 +339,7 @@ var CIECAM02_VC = (function() {
   vc.n = vc.yb / vc.D65_Y;
   vc.z = 1.48 + Math.sqrt(vc.n);
 
-  var k = 1.0 / ((5.0 * vc.la) + 1.0);
+  const k = 1.0 / ((5.0 * vc.la) + 1.0);
   vc.fl = (0.2 * Math.pow(k, 4.0) * (5.0 * vc.la)) +
           0.1 * Math.pow(1.0 - Math.pow(k, 4.0), 2.0) *
               Math.pow(5.0 * vc.la, 1.0/3.0);
@@ -348,20 +348,20 @@ var CIECAM02_VC = (function() {
   vc.ncb = vc.nbb;
   vc.d = vc.f * ( 1.0 - (1.0 / 3.6) * Math.exp((-vc.la - 42.0) / 92.0) );
   vc.achromaticResponseToWhite = (function() {
-    var l = vc.D65_LMS.l,
+    const l = vc.D65_LMS.l,
         m = vc.D65_LMS.m,
         s = vc.D65_LMS.s;
 
-    var lc = l * (((vc.D65_Y * vc.d) / l) + (1.0 - vc.d)),
+    const lc = l * (((vc.D65_Y * vc.d) / l) + (1.0 - vc.d)),
         mc = m * (((vc.D65_Y * vc.d) / m) + (1.0 - vc.d)),
         sc = s * (((vc.D65_Y * vc.d) / s) + (1.0 - vc.d));
 
-    var hpeTransforms = cat022hpe(lc, mc, sc),
+    const hpeTransforms = cat022hpe(lc, mc, sc),
         lp = hpeTransforms.lh,
         mp = hpeTransforms.mh,
         sp = hpeTransforms.sh;
 
-    var lpa = nonlinearAdaptation(lp, vc.fl),
+    const lpa = nonlinearAdaptation(lp, vc.fl),
         mpa = nonlinearAdaptation(mp, vc.fl),
         spa = nonlinearAdaptation(sp, vc.fl);
 
@@ -372,14 +372,14 @@ var CIECAM02_VC = (function() {
 })(); // end CIECAM02_VC
 
 function xyz2cat02(x,y,z) {
-  var l = ( 0.7328 * x) + (0.4296 * y) - (0.1624 * z),
+  const l = ( 0.7328 * x) + (0.4296 * y) - (0.1624 * z),
       m = (-0.7036 * x) + (1.6975 * y) + (0.0061 * z),
       s = ( 0.0030 * x) + (0.0136 * y) + (0.9834 * z);
   return {l: l, m: m, s: s};
 }
 
 function cat022hpe(l,m,s) {
-  var lh = ( 0.7409792 * l) + (0.2180250 * m) + (0.0410058 * s),
+  const lh = ( 0.7409792 * l) + (0.2180250 * m) + (0.0410058 * s),
       mh = ( 0.2853532 * l) + (0.6242014 * m) + (0.0904454 * s),
       sh = (-0.0096280 * l) - (0.0056980 * m) + (1.0153260 * s);
 
@@ -387,6 +387,6 @@ function cat022hpe(l,m,s) {
 }
 
 function nonlinearAdaptation(coneResponse, fl) {
-  var p = Math.pow( (fl * coneResponse) / 100.0, 0.42 );
+  const p = Math.pow( (fl * coneResponse) / 100.0, 0.42 );
   return ((400.0 * p) / (27.13 + p)) + 0.1;
 }

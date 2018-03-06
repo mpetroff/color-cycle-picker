@@ -1,14 +1,14 @@
-var canvas = document.getElementById('canvas');
-var swatchList = document.getElementById('swatchlist');
-var colorDots = document.getElementById('colorDots');
-var sliderVal = 35;
+let canvas = document.getElementById('canvas');
+let swatchList = document.getElementById('swatchlist');
+let colorDots = document.getElementById('colorDots');
+let sliderVal = 35;
 
 Sortable.create(swatchList, {
     //filter: '.js-remove',
     filter: evt => evt.target.className == 'js-remove' || evt.target.className == 'js-edit',
     onFilter: function(evt) {
         if (evt.target.className == 'js-remove') {
-            for (var i = 0; i < colors.length; i++) {
+            for (let i = 0; i < colors.length; i++) {
                 if (colors[i][0] == evt.item.dataset.color) {
                     colors.splice(i, 1);
                     render();
@@ -23,8 +23,8 @@ Sortable.create(swatchList, {
     onUpdate: function(evt) {
         // FIXME: There must be a better way to do this...
         colors = Array.prototype.map.call(evt.target.childNodes, function(x) {
-            var c = colorToHex(d3.rgb(x.dataset.color));
-            for (var i = 0; i < colors.length; i++) {
+            const c = colorToHex(d3.rgb(x.dataset.color));
+            for (let i = 0; i < colors.length; i++) {
                 if (colorToHex(colors[i][0].rgb()) == c)
                     return colors[i];
             }
@@ -33,25 +33,25 @@ Sortable.create(swatchList, {
     }
 });
 
-var colors = [];
+let colors = [];
 
 function minDist(jab) {
-    var min_dist = 9999;
-    for (var i = 0; i < colors.length; i++)
-        for (var j = 0; j < colors[i].length; j++)
+    let min_dist = 9999;
+    for (let i = 0; i < colors.length; i++)
+        for (let j = 0; j < colors[i].length; j++)
             min_dist = Math.min(min_dist, jab.de(colors[i][j]));
     return min_dist;
 }
 
 function minLightnessDist(jab) {
-    var min_dist = 9999;
-    for (var i = 0; i < colors.length; i++)
+    let min_dist = 9999;
+    for (let i = 0; i < colors.length; i++)
         min_dist = Math.min(min_dist, Math.abs(jab.l - colors[i][0].l));
     return min_dist;
 }
 
 function coordToJab(coords) {
-    var width = canvas.width,
+    const width = canvas.width,
         height = canvas.height,
         x = coords[0],
         y = coords[1];
@@ -60,12 +60,12 @@ function coordToJab(coords) {
 
 
 d3.select('#colorDots').on('mousemove', function() {
-    var jab = coordToJab(d3.mouse(this));
-    var c = jab.rgb();
+    const jab = coordToJab(d3.mouse(this));
+    const c = jab.rgb();
     
-    var min_dist = minDist(jab);
+    const min_dist = minDist(jab);
     
-    var cs = colors.slice();
+    let cs = colors.slice();
     if (min_dist < 20 || !c.displayable()) {
         colorDots.style.cursor = 'default';
     } else {
@@ -78,7 +78,7 @@ d3.select('#colorDots').on('mousemove', function() {
 });
 
 function colorToHex(c) {
-    var r = Math.round(c.r).toString(16),
+    let r = Math.round(c.r).toString(16),
         g = Math.round(c.g).toString(16),
         b = Math.round(c.b).toString(16);
     r = r.length == 1 ? 0 + r : r;
@@ -87,23 +87,23 @@ function colorToHex(c) {
     return '#' + r + g + b;
 }
 
-var vizLightness = d3.select("#vizLightness");
-var vizLightnessGray = vizLightness.append("g")
+let vizLightness = d3.select("#vizLightness");
+let vizLightnessGray = vizLightness.append("g")
     .attr("transform", "translate(0," + 20 + ")");
-var vizLightnessColor = vizLightness.append("g")
+let vizLightnessColor = vizLightness.append("g")
     .attr("transform", "translate(0," + 40 + ")");
 
 function updateViz(cs) {
-    var c = [];
-    for (var i = 0; i < cs.length; i++)
+    let c = [];
+    for (let i = 0; i < cs.length; i++)
         c.push(cs[i][0]);
 
     // Large swatches
-    var swatches = d3.select('#vizLargeSwatches');
+    let swatches = d3.select('#vizLargeSwatches');
     // Resize to fit
     swatches.style("height", c.length * 50 + 'px');
     // Update contents
-    var rects = swatches.selectAll("rect")
+    let rects = swatches.selectAll("rect")
       .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
@@ -115,7 +115,7 @@ function updateViz(cs) {
         .attr("fill", d => d.rgb().toString());
 
     // Medium swatches
-    var swatches = d3.select('#vizMediumSwatches');
+    swatches = d3.select('#vizMediumSwatches');
     // Resize to fit
     swatches.style("height", Math.ceil(c.length / 3) * 35 + 'px');
     // Update contents
@@ -131,7 +131,7 @@ function updateViz(cs) {
         .attr("fill", d => d.rgb().toString());
 
     // Small swatches
-    var swatches = d3.select('#vizSmallSwatches');
+    swatches = d3.select('#vizSmallSwatches');
     // Resize to fit
     swatches.style("height", Math.ceil(c.length / 3) * 35 + 'px');
     // Update contents
@@ -147,11 +147,11 @@ function updateViz(cs) {
         .attr("fill", d => d.rgb().toString());
 
     // Circle swatches
-    var swatches = d3.select('#vizCircles');
+    swatches = d3.select('#vizCircles');
     // Resize to fit
     swatches.style("height", Math.ceil(c.length / 3) * 35 + 'px');
     // Update contents
-    var circles = swatches.selectAll("circle")
+    let circles = swatches.selectAll("circle")
       .data(c);
     circles.exit().remove();
     circles.enter().append("circle")
@@ -164,11 +164,11 @@ function updateViz(cs) {
         .attr("stroke", d => d.rgb().toString());
 
     // Line swatches
-    var swatches = d3.select('#vizLines');
+    swatches = d3.select('#vizLines');
     // Resize to fit
     swatches.style("height", c.length * 20 + 'px');
     // Update contents
-    var rects = swatches.selectAll("rect")
+    rects = swatches.selectAll("rect")
       .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
@@ -180,9 +180,9 @@ function updateViz(cs) {
         .attr("fill", d => d.rgb().toString());
 
     // Vertical line swatches for lightness visualization
-    var swatches = vizLightnessGray;
+    swatches = vizLightnessGray;
     // Update contents
-    var rects = swatches.selectAll("rect")
+    rects = swatches.selectAll("rect")
       .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
@@ -192,9 +192,9 @@ function updateViz(cs) {
       .merge(rects)
         .attr("x", d => sliderScale(d.J) + sliderMargin.left - 1)
         .attr("fill", d => d3.jab(d.J, 0, 0).rgb().toString());
-    var swatches = vizLightnessColor;
+    swatches = vizLightnessColor;
     // Update contents
-    var rects = swatches.selectAll("rect")
+    rects = swatches.selectAll("rect")
       .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
@@ -206,17 +206,17 @@ function updateViz(cs) {
         .attr("fill", d => d.rgb().toString());
 
     // Update output text area
-    var output = '';
-    for (var i = 0; i < colors.length; i++)
+    let output = '';
+    for (let i = 0; i < colors.length; i++)
         output += colorToHex(colors[i][0].rgb()) + ', ';
     document.getElementById('output').value = output;
     
     // Dots of gamut
-    var swatches = d3.select('#colorDots');
+    swatches = d3.select('#colorDots');
     if (colorDots.style.cursor == 'crosshair')
         c = c.slice(0, c.length - 1);
     // Update contents
-    var circles = swatches.selectAll("circle")
+    circles = swatches.selectAll("circle")
       .data(c);
     circles.exit().remove();
     circles.enter().append("circle")
@@ -234,13 +234,13 @@ function mouseClick() {
     
     if (minDist(jab) > 20 && c.displayable()) {
         let color = [jab];
-        var cvd_config = {'protanomaly': 50, 'deuteranomaly': 50, 'tritanomaly': 25}
+        const cvd_config = {'protanomaly': 50, 'deuteranomaly': 50, 'tritanomaly': 25}
         Object.keys(cvd_config).forEach(function(key) {
             const cvd_c = d3.jab(cvd_forward(c, key, cvd_config[key]));
             color.push(cvd_c);
             const cvd_dist = jab.de(cvd_c);
             const cvd_num = Math.round(cvd_dist / 5);
-            for (var i = 1; i < cvd_num; i++)
+            for (let i = 1; i < cvd_num; i++)
                 color.push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
         });
         colors.push(color);
@@ -300,11 +300,11 @@ function render() {
     webglRender(sliderVal);
 }
 
-var sliderMargin = {right: 10, left: 10},
+const sliderMargin = {right: 10, left: 10},
     sliderWidth = +vizLightness.attr("width") - sliderMargin.left - sliderMargin.right,
     sliderHeight = 20;
 
-var sliderGradient = vizLightness.append("defs").append("linearGradient")
+const sliderGradient = vizLightness.append("defs").append("linearGradient")
    .attr("id", "grad")
    .attr("x1", "0%")
    .attr("x2", "100%")
@@ -318,12 +318,12 @@ sliderGradient.append("stop")
    .attr("offset", "100%")
    .attr("style", "stop-color: hsl(0, 0%, 95%);");
 
-var sliderScale = d3.scaleLinear()
+let sliderScale = d3.scaleLinear()
     .domain([35, 95])
     .range([0, sliderWidth])
     .clamp(true);
 
-var slider = vizLightness.append("g")
+let slider = vizLightness.append("g")
     .attr("class", "slider")
     .attr("transform", "translate(" + sliderMargin.left + "," + sliderHeight / 2+ ")");
 slider.append("line")
@@ -332,7 +332,7 @@ slider.append("line")
     .attr("x2", sliderScale.range()[1])
     .attr("stroke", "url(#grad)")
     .attr("stroke-width", 10);
-var trackOverlay = slider.append("line")
+let trackOverlay = slider.append("line")
     .attr("id", "sliderTrackOverlay")
     .attr("x1", sliderScale.range()[0])
     .attr("x2", sliderScale.range()[1])
@@ -351,7 +351,7 @@ trackOverlay.on('mousemove', function() {
 });
 trackOverlay.on('mouseout', render);
 
-var sliderHandle = slider.insert("circle", "#sliderTrackOverlay")
+let sliderHandle = slider.insert("circle", "#sliderTrackOverlay")
     .attr("id", "sliderHandle")
     .attr("r", 8.75);
 
