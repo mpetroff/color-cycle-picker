@@ -9,7 +9,7 @@ Sortable.create(swatchList, {
     onFilter: function(evt) {
         if (evt.target.className == 'js-remove') {
             for (var i = 0; i < colors.length; i++) {
-                if (colors[i] == evt.item.dataset.color) {
+                if (colors[i][0] == evt.item.dataset.color) {
                     colors.splice(i, 1);
                     render();
                 }
@@ -21,7 +21,14 @@ Sortable.create(swatchList, {
         }
     },
     onUpdate: function(evt) {
-        colors = Array.prototype.map.call(evt.target.childNodes, x => d3.jab(x.dataset.color));
+        // FIXME: There must be a better way to do this...
+        colors = Array.prototype.map.call(evt.target.childNodes, function(x) {
+            var c = colorToHex(d3.rgb(x.dataset.color));
+            for (var i = 0; i < colors.length; i++) {
+                if (colorToHex(colors[i][0].rgb()) == c)
+                    return colors[i];
+            }
+        });
         updateViz(colors);
     }
 });
@@ -30,15 +37,16 @@ var colors = [];
 
 function minDist(jab) {
     var min_dist = 9999;
-    for (var j = 0; j < colors.length; j++)
-        min_dist = Math.min(min_dist, jab.de(colors[j]));
+    for (var i = 0; i < colors.length; i++)
+        for (var j = 0; j < colors[i].length; j++)
+            min_dist = Math.min(min_dist, jab.de(colors[i][j]));
     return min_dist;
 }
 
 function minLightnessDist(jab) {
     var min_dist = 9999;
-    for (var j = 0; j < colors.length; j++)
-        min_dist = Math.min(min_dist, Math.abs(jab.l - colors[j].l));
+    for (var i = 0; i < colors.length; i++)
+        min_dist = Math.min(min_dist, Math.abs(jab.l - colors[i][0].l));
     return min_dist;
 }
 
@@ -62,7 +70,7 @@ d3.select('#colorDots').on('mousemove', function() {
         colorDots.style.cursor = 'default';
     } else {
         colorDots.style.cursor = 'crosshair';
-        cs.push(jab);
+        cs.push([jab]);
     }
     updateViz(cs);
     
@@ -85,7 +93,11 @@ var vizLightnessGray = vizLightness.append("g")
 var vizLightnessColor = vizLightness.append("g")
     .attr("transform", "translate(0," + 40 + ")");
 
-function updateViz(c) {
+function updateViz(cs) {
+    var c = [];
+    for (var i = 0; i < cs.length; i++)
+        c.push(cs[i][0]);
+
     // Large swatches
     var swatches = d3.select('#vizLargeSwatches');
     // Resize to fit
@@ -196,7 +208,7 @@ function updateViz(c) {
     // Update output text area
     var output = '';
     for (var i = 0; i < colors.length; i++)
-        output += colorToHex(colors[i].rgb()) + ', ';
+        output += colorToHex(colors[i][0].rgb()) + ', ';
     document.getElementById('output').value = output;
     
     // Dots of gamut
@@ -217,15 +229,23 @@ function updateViz(c) {
 
 d3.select('#colorDots').on('click', mouseClick);
 function mouseClick() {
-    var jab = coordToJab(d3.mouse(this));
-    var c = jab.rgb();
+    const jab = coordToJab(d3.mouse(this));
+    const c = jab.rgb();
     
-    var min_dist = minDist(jab);
-    
-    if (min_dist > 20 && c.displayable()) {
-        colors.push(jab);
+    if (minDist(jab) > 20 && c.displayable()) {
+        let color = [jab];
+        var cvd_config = {'protanomaly': 50, 'deuteranomaly': 50, 'tritanomaly': 25}
+        Object.keys(cvd_config).forEach(function(key) {
+            const cvd_c = d3.jab(cvd_forward(c, key, cvd_config[key]));
+            color.push(cvd_c);
+            const cvd_dist = jab.de(cvd_c);
+            const cvd_num = Math.round(cvd_dist / 5);
+            for (var i = 1; i < cvd_num; i++)
+                color.push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
+        });
+        colors.push(color);
         
-        var li = document.createElement('li');
+        let li = document.createElement('li');
         li.className = 'list-group-item list-group-item-action';
         li.innerHTML = '<span class="swatchListBlock" style="background:' +
             jab.rgb().toString() + '">&#x2588;&#x2588;&#x2588;&#x2588;</span>' + colorToHex(jab.rgb()) +
@@ -236,7 +256,6 @@ function mouseClick() {
         updateViz(colors);
         
         render();
-        updateViz(colors);
         canvas.style.cursor = 'default';
     }
 }

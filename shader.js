@@ -51,12 +51,15 @@ function webglRender(J) {
     gl.uniform1f(u, J);
     
     // Set existing colors
-    var colorArray = Array(16*3);
+    var colorArray = Array(256*3);
     colorArray.fill(-1000);
+    var n = 0;
     for (var i = 0; i < colors.length; i++) {
-        colorArray[i*3] = colors[i].J;
-        colorArray[i*3+1] = colors[i].a;
-        colorArray[i*3+2] = colors[i].b;
+        for (var j = 0; j < colors[i].length; j++) {
+            colorArray[n++] = colors[i][j].J;
+            colorArray[n++] = colors[i][j].a;
+            colorArray[n++] = colors[i][j].b;
+        }
     }
     u = gl.getUniformLocation(program, 'u_colors');
     gl.uniform3fv(u, colorArray);
@@ -280,11 +283,11 @@ float cam02de(vec3 c1, vec3 c2) {
 }
 
 // Existing colors
-uniform vec3 u_colors[32];
+uniform vec3 u_colors[256];
 
 float minDist(vec3 jab) {
     float min_dist = 9999.;
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < 256; i++)
         if (u_colors[i][0] >= -999. && u_colors[i][1] >= -999. && u_colors[i][2] >= -999.)
             min_dist = min(min_dist, cam02de(jab, u_colors[i]));
     return min_dist;
