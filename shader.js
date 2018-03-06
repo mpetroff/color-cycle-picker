@@ -51,7 +51,7 @@ function webglRender(J) {
     gl.uniform1f(u, J);
     
     // Set existing colors
-    let colorArray = Array(256*3);
+    let colorArray = Array(512*3);
     colorArray.fill(-1000);
     let n = 0;
     for (let i = 0; i < colors.length; i++) {
@@ -283,11 +283,11 @@ float cam02de(vec3 c1, vec3 c2) {
 }
 
 // Existing colors
-uniform vec3 u_colors[256];
+uniform vec3 u_colors[512];
 
 float minDist(vec3 jab) {
     float min_dist = 9999.;
-    for (int i = 0; i < 256; i++)
+    for (int i = 0; i < 512; i++)
         if (u_colors[i][0] >= -999. && u_colors[i][1] >= -999. && u_colors[i][2] >= -999.)
             min_dist = min(min_dist, cam02de(jab, u_colors[i]));
     return min_dist;

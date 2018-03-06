@@ -239,7 +239,7 @@ function mouseClick() {
             const cvd_c = d3.jab(cvd_forward(c, key, cvd_config[key]));
             color.push(cvd_c);
             const cvd_dist = jab.de(cvd_c);
-            const cvd_num = Math.round(cvd_dist / 5);
+            const cvd_num = Math.round(cvd_dist / 2);
             for (let i = 1; i < cvd_num; i++)
                 color.push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
         });
