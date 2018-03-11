@@ -46,7 +46,7 @@ function minDist(jab) {
 function minLightnessDist(jab) {
     let min_dist = 9999;
     for (let i = 0; i < colors.length; i++)
-        min_dist = Math.min(min_dist, Math.abs(jab.l - colors[i][0].l));
+        min_dist = Math.min(min_dist, Math.abs(jab.J - colors[i][0].J));
     return min_dist;
 }
 
@@ -63,10 +63,13 @@ d3.select('#colorDots').on('mousemove', function() {
     const jab = coordToJab(d3.mouse(this));
     const c = jab.rgb();
     
-    const min_dist = minDist(jab);
-    
+    const min_dist = minDist(jab),
+          min_light_dist = minLightnessDist(jab);
+
     let cs = colors.slice();
-    if (min_dist < 20 || !c.displayable()) {
+    if (min_dist < Number(document.getElementById('colorDistInput').value) ||
+        min_light_dist < Number(document.getElementById('lightDistInput').value) ||
+        !c.displayable()) {
         colorDots.style.cursor = 'default';
     } else {
         colorDots.style.cursor = 'crosshair';
@@ -232,9 +235,15 @@ function mouseClick() {
     const jab = coordToJab(d3.mouse(this));
     const c = jab.rgb();
     
-    if (minDist(jab) > 20 && c.displayable()) {
+    if (minDist(jab) > Number(document.getElementById('colorDistInput').value) &&
+        minLightnessDist(jab) > Number(document.getElementById('lightDistInput').value) &&
+        c.displayable()) {
         let color = [jab];
-        const cvd_config = {'protanomaly': 50, 'deuteranomaly': 50, 'tritanomaly': 25}
+        const cvd_config = {
+            'protanomaly': Number(document.getElementById('protanomalyInput').value),
+            'deuteranomaly': Number(document.getElementById('deuteranomalyInput').value),
+            'tritanomaly': Number(document.getElementById('tritanomalyInput').value)
+        }
         Object.keys(cvd_config).forEach(function(key) {
             const cvd_c = d3.jab(cvd_forward(c, key, cvd_config[key]));
             color.push(cvd_c);

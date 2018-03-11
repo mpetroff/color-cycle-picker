@@ -47,7 +47,7 @@ function webglInit(canvas) {
 
 function webglRender(J) {
     // Set lightness
-    u = gl.getUniformLocation(program, 'u_J');
+    let u = gl.getUniformLocation(program, 'u_J');
     gl.uniform1f(u, J);
     
     // Set existing colors
@@ -63,7 +63,13 @@ function webglRender(J) {
     }
     u = gl.getUniformLocation(program, 'u_colors');
     gl.uniform3fv(u, colorArray);
-    
+
+    // Set minimum distances
+    u = gl.getUniformLocation(program, 'u_minColorDist');
+    gl.uniform1f(u, Number(document.getElementById('colorDistInput').value));
+    u = gl.getUniformLocation(program, 'u_minLightDist');
+    gl.uniform1f(u, Number(document.getElementById('lightDistInput').value));
+
     // Draw using current buffer
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
@@ -293,8 +299,20 @@ float minDist(vec3 jab) {
     return min_dist;
 }
 
+float minLightnessDist(vec3 jab) {
+    float min_dist = 9999.;
+    for (int i = 0; i < 512; i++)
+        if (u_colors[i][0] >= -999. && u_colors[i][1] >= -999. && u_colors[i][2] >= -999.)
+            min_dist = min(min_dist, abs(jab[0] - u_colors[i][0]));
+    return min_dist;
+}
+
 // Coordinates passed in from vertex shader
 varying vec2 v_texCoord;
+
+// Minimum distances
+uniform float u_minColorDist;
+uniform float u_minLightDist;
 
 // Lightness
 uniform float u_J;
@@ -302,7 +320,8 @@ uniform float u_J;
 void main() {
     vec3 jab = vec3(u_J, v_texCoord.x * 50., v_texCoord.y * 50.);
     vec3 rgb = jabToRgb(jab[0], jab[1], jab[2]);
-    if (rgb[0] < 0. || rgb[0] > 1. || rgb[1] < 0. || rgb[1] > 1. || rgb[2] < 0. || rgb[2] > 1. || minDist(jab) < 20.) {
+    if (rgb[0] < 0. || rgb[0] > 1. || rgb[1] < 0. || rgb[1] > 1. || rgb[2] < 0. || rgb[2] > 1.
+        || minDist(jab) < u_minColorDist || minLightnessDist(jab) < u_minLightDist) {
         rgb = vec3(0.94, 0.94, 0.94);
     }
     
