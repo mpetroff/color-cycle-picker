@@ -209,10 +209,7 @@ function updateViz(cs) {
         .attr("fill", d => d.rgb().toString());
 
     // Update output text area
-    let output = '';
-    for (let i = 0; i < colors.length; i++)
-        output += colorToHex(colors[i][0].rgb()) + ', ';
-    document.getElementById('output').value = output;
+    updateOutput();
     
     // Dots of gamut
     swatches = d3.select('#colorDots');
@@ -238,21 +235,7 @@ function mouseClick() {
     if (minDist(jab) > Number(document.getElementById('colorDistInput').value) &&
         minLightnessDist(jab) > Number(document.getElementById('lightDistInput').value) &&
         c.displayable()) {
-        let color = [jab];
-        const cvd_config = {
-            'protanomaly': Number(document.getElementById('protanomalyInput').value),
-            'deuteranomaly': Number(document.getElementById('deuteranomalyInput').value),
-            'tritanomaly': Number(document.getElementById('tritanomalyInput').value)
-        }
-        Object.keys(cvd_config).forEach(function(key) {
-            const cvd_c = d3.jab(cvd_forward(c, key, cvd_config[key]));
-            color.push(cvd_c);
-            const cvd_dist = jab.de(cvd_c);
-            const cvd_num = Math.round(cvd_dist / 2);
-            for (let i = 1; i < cvd_num; i++)
-                color.push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
-        });
-        colors.push(color);
+        colors.push(calcCVD(jab));
         
         let li = document.createElement('li');
         li.className = 'list-group-item list-group-item-action';
@@ -260,6 +243,7 @@ function mouseClick() {
             jab.rgb().toString() + '">&#x2588;&#x2588;&#x2588;&#x2588;</span>' + colorToHex(jab.rgb()) +
             '<span class="swatchButtons"><span class="js-edit">&#x270e;</span> <span class="js-remove">&#x2716;</span></span>';
         li.dataset.color = jab;
+        li.id = 'color' + colorToHex(c).slice(1);
         swatchList.appendChild(li);
         
         updateViz(colors);
@@ -363,6 +347,82 @@ trackOverlay.on('mouseout', render);
 let sliderHandle = slider.insert("circle", "#sliderTrackOverlay")
     .attr("id", "sliderHandle")
     .attr("r", 8.75);
+
+d3.select('#colorDistInput').on('change', configChange);
+d3.select('#lightDistInput').on('change', configChange);
+d3.select('#deuteranomalyInput').on('change', configChange);
+d3.select('#protanomalyInput').on('change', configChange);
+d3.select('#tritanomalyInput').on('change', configChange);
+
+function updateOutput() {
+    // Update output text area
+    let output = '';
+    if (too_close)
+        output = 'Colors are too close!'
+    else
+        for (let i = 0; i < colors.length; i++)
+            output += colorToHex(colors[i][0].rgb()) + ', ';
+    document.getElementById('output').value = output;
+}
+
+function calcCVD(jab) {
+    let color = [jab];
+    const c = jab.rgb();
+    const cvd_config = {
+        'protanomaly': Number(document.getElementById('protanomalyInput').value),
+        'deuteranomaly': Number(document.getElementById('deuteranomalyInput').value),
+        'tritanomaly': Number(document.getElementById('tritanomalyInput').value)
+    }
+    Object.keys(cvd_config).forEach(function(key) {
+        const cvd_c = d3.jab(cvd_forward(c, key, cvd_config[key]));
+        color.push(cvd_c);
+        const cvd_dist = jab.de(cvd_c);
+        const cvd_num = Math.round(cvd_dist / 2);
+        for (let i = 1; i < cvd_num; i++)
+            color.push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
+    });
+    return color;
+}
+
+let too_close = false;
+function configChange() {
+    // Recalculate CVD simulation
+    for (let i = 0; i < colors.length; i++)
+        colors[i] = calcCVD(colors[i][0]);
+
+    // Check for colors that are too close
+    const color_dist = Number(document.getElementById('colorDistInput').value);
+    const light_dist = Number(document.getElementById('lightDistInput').value);
+    too_close = false;
+    for (let i = 0; i < colors.length; i++) {
+        let min_color_dist = 9999;
+        let min_light_dist = 9999;
+        let jab = colors[i][0];
+        for (let j = 0; j < colors.length; j++) {
+            if (i != j) {
+                for (let k = 0; k < colors[j].length; k++)
+                    min_color_dist = Math.min(min_color_dist, jab.de(colors[j][k]));
+                min_light_dist = Math.min(min_light_dist, Math.abs(jab.J - colors[j][0].J));
+            }
+        }
+        const elem = document.getElementById('color' + colorToHex(colors[i][0].rgb()).slice(1));
+        if (min_color_dist < color_dist || min_light_dist < light_dist) {
+            too_close = true;
+            elem.classList.add('list-group-item-danger');
+        } else {
+            elem.classList.remove('list-group-item-danger');
+        }
+
+        // TODO: remove these debug statements
+        if (min_color_dist < color_dist)
+            console.log('color ' + i + 'is too close in color');
+        if (min_light_dist < light_dist)
+            console.log('color ' + i + ' is too close in lightness');
+    }
+
+    updateOutput();
+    render();
+}
 
 webglInit(canvas);
 adjustSlider(60);   // Sets inital lightness and renders visualization
