@@ -15,6 +15,7 @@ Sortable.create(swatchList, {
                 }
             }
             evt.item && evt.item.parentNode.removeChild(evt.item);
+            configChange();
             updateViz(colors);
         } else {
             // TODO: open color swatch edit dialog
@@ -62,9 +63,13 @@ function coordToJab(coords) {
 d3.select('#colorDots').on('mousemove', function() {
     const jab = coordToJab(d3.mouse(this));
     const c = jab.rgb();
-    
-    const min_dist = minDist(jab),
-          min_light_dist = minLightnessDist(jab);
+
+    const min_light_dist = minLightnessDist(jab);
+
+    let min_dist = 9999;
+    let cvd_colors = calcCVD(jab);
+    for (let i = 0; i < cvd_colors.length; i++)
+        min_dist = Math.min(min_dist, minDist(cvd_colors[i]));
 
     let cs = colors.slice();
     if (min_dist < Number(document.getElementById('colorDistInput').value) ||
@@ -378,7 +383,7 @@ function calcCVD(jab) {
         color.push(cvd_c);
         const cvd_dist = jab.de(cvd_c);
         const cvd_num = Math.round(cvd_dist / 2);
-        for (let i = 1; i < cvd_num; i++)
+        for (let i = 1; i <= cvd_num; i++)
             color.push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
     });
     return color;
@@ -415,9 +420,9 @@ function configChange() {
 
         // TODO: remove these debug statements
         if (min_color_dist < color_dist)
-            console.log('color ' + i + 'is too close in color');
+            console.log('color ' + i + 'is too close in color: ' + min_color_dist);
         if (min_light_dist < light_dist)
-            console.log('color ' + i + ' is too close in lightness');
+            console.log('color ' + i + ' is too close in lightness: ' + min_light_dist);
     }
 
     updateOutput();
