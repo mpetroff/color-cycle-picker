@@ -37,17 +37,21 @@ Sortable.create(swatchList, {
 let colors = [];
 
 function minDist(jab) {
+    let cvd_colors = calcCVD(jab);
     let min_dist = 9999;
-    for (let i = 0; i < colors.length; i++)
-        for (let j = 0; j < colors[i].length; j++)
-            min_dist = Math.min(min_dist, jab.de(colors[i][j]));
+    Object.keys(cvd_colors).forEach(function(key) {
+        for (let k = 0; k < cvd_colors[key].length; k ++)
+            for (let i = 0; i < colors.length; i++)
+                for (let j = 0; j < colors[i][key].length; j++)
+                    min_dist = Math.min(min_dist, cvd_colors[key][k].de(colors[i][key][j]));
+    });
     return min_dist;
 }
 
 function minLightnessDist(J) {
     let min_dist = 9999;
     for (let i = 0; i < colors.length; i++)
-        min_dist = Math.min(min_dist, Math.abs(J - colors[i][0].J));
+        min_dist = Math.min(min_dist, Math.abs(J - colors[i].base[0].J));
     return min_dist;
 }
 
@@ -61,15 +65,16 @@ function coordToJab(coords) {
 
 
 d3.select('#colorDots').on('mousemove', function() {
+    if (colors.length >= 12) {
+        colorDots.style.cursor = 'default';
+        return;
+    }
+
     const jab = coordToJab(d3.mouse(this));
     const c = jab.rgb();
 
     const min_light_dist = minLightnessDist(jab.J);
-
-    let min_dist = 9999;
-    let cvd_colors = calcCVD(jab);
-    for (let i = 0; i < cvd_colors.length; i++)
-        min_dist = Math.min(min_dist, minDist(cvd_colors[i]));
+    const min_dist = minDist(jab);
 
     let cs = colors.slice();
     if (min_dist < Number(document.getElementById('colorDistInput').value) ||
@@ -78,7 +83,7 @@ d3.select('#colorDots').on('mousemove', function() {
         colorDots.style.cursor = 'default';
     } else {
         colorDots.style.cursor = 'crosshair';
-        cs.push([jab]);
+        cs.push({base: [jab]});
     }
     updateViz(cs);
     
@@ -104,7 +109,7 @@ let vizLightnessColor = vizLightness.append("g")
 function updateViz(cs) {
     let c = [];
     for (let i = 0; i < cs.length; i++)
-        c.push(cs[i][0]);
+        c.push(cs[i].base[0]);
 
     // Large swatches
     let swatches = d3.select('#vizLargeSwatches');
@@ -234,9 +239,14 @@ function updateViz(cs) {
 
 d3.select('#colorDots').on('click', mouseClick);
 function mouseClick() {
+    if (colors.length >= 12) {
+        alert('Only 12 colors are supported (due to WebGL limitations)!')
+        return;
+    }
+
     const jab = coordToJab(d3.mouse(this));
     const c = jab.rgb();
-    
+
     if (minDist(jab) > Number(document.getElementById('colorDistInput').value) &&
         minLightnessDist(jab.J) > Number(document.getElementById('lightDistInput').value) &&
         c.displayable()) {
@@ -366,12 +376,12 @@ function updateOutput() {
         output = 'Colors are too close!'
     else
         for (let i = 0; i < colors.length; i++)
-            output += colorToHex(colors[i][0].rgb()) + ', ';
+            output += colorToHex(colors[i].base[0].rgb()) + ', ';
     document.getElementById('output').value = output;
 }
 
 function calcCVD(jab) {
-    let color = [jab];
+    let color = {'base': [jab]};
     const c = jab.rgb();
     const cvd_config = {
         'protanomaly': Number(document.getElementById('protanomalyInput').value),
@@ -380,11 +390,12 @@ function calcCVD(jab) {
     }
     Object.keys(cvd_config).forEach(function(key) {
         const cvd_c = d3.jab(cvd_forward(c, key, cvd_config[key]));
-        color.push(cvd_c);
-        const cvd_dist = jab.de(cvd_c);
-        const cvd_num = Math.round(cvd_dist / 2);
+        color[key] = [cvd_c];
+        //const cvd_dist = jab.de(cvd_c);
+        //const cvd_num = Math.round(cvd_dist / 2);
+        const cvd_num = 4;  // Dynamic is better but isn't possible in shader
         for (let i = 1; i <= cvd_num; i++)
-            color.push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
+            color[key].push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
     });
     return color;
 }

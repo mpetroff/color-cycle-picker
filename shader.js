@@ -49,18 +49,27 @@ function webglRender(J) {
     
     if (minLightnessDist(J) > Number(document.getElementById('lightDistInput').value)) {
         // Set existing colors
-        let colorArray = Array(128*3);
-        colorArray.fill(-1000);
-        let n = 0;
-        for (let i = 0; i < colors.length; i++) {
-            for (let j = 0; j < colors[i].length; j++) {
-                colorArray[n++] = colors[i][j].J;
-                colorArray[n++] = colors[i][j].a;
-                colorArray[n++] = colors[i][j].b;
+        let colorArrays = {};
+        colorArrays.base = Array(12*3);
+        colorArrays.base.fill(-1000);
+        colorArrays.protanomaly = Array(60*3);
+        colorArrays.protanomaly.fill(-1000);
+        colorArrays.deuteranomaly = Array(60*3);
+        colorArrays.deuteranomaly.fill(-1000);
+        colorArrays.tritanomaly = Array(60*3);
+        colorArrays.tritanomaly.fill(-1000);
+        Object.keys(colorArrays).forEach(function(key) {
+            let n = 0;
+            for (let i = 0; i < colors.length; i++) {
+                for (let j = 0; j < colors[i][key].length; j++) {
+                    colorArrays[key][n++] = colors[i][key][j].J;
+                    colorArrays[key][n++] = colors[i][key][j].a;
+                    colorArrays[key][n++] = colors[i][key][j].b;
+                }
             }
-        }
-        u = gl.getUniformLocation(program, 'u_colors');
-        gl.uniform3fv(u, colorArray);
+            u = gl.getUniformLocation(program, 'u_' + key + '_colors');
+            gl.uniform3fv(u, colorArrays[key]);
+        });
 
         // Set minimum distances
         u = gl.getUniformLocation(program, 'u_minColorDist');
@@ -370,13 +379,37 @@ float cam02de(vec3 c1, vec3 c2) {
 }
 
 // Existing colors
-uniform vec3 u_colors[128];
+uniform vec3 u_base_colors[12];
+uniform vec3 u_protanomaly_colors[60];
+uniform vec3 u_deuteranomaly_colors[60];
+uniform vec3 u_tritanomaly_colors[60];
 
 float minDist(vec3 jab) {
     float min_dist = 9999.;
-    for (int i = 0; i < 128; i++)
-        if (u_colors[i][0] >= -999. && u_colors[i][1] >= -999. && u_colors[i][2] >= -999.)
-            min_dist = min(min_dist, cam02de(jab, u_colors[i]));
+    for (int i = 0; i < 15; i++)
+        if (u_base_colors[i][0] >= -999. && u_base_colors[i][1] >= -999. && u_base_colors[i][2] >= -999.)
+            min_dist = min(min_dist, cam02de(jab, u_base_colors[i]));
+    return min_dist;
+}
+float minDistProtanomaly(vec3 jab) {
+    float min_dist = 9999.;
+    for (int i = 0; i < 75; i++)
+        if (u_protanomaly_colors[i][0] >= -999. && u_protanomaly_colors[i][1] >= -999. && u_protanomaly_colors[i][2] >= -999.)
+            min_dist = min(min_dist, cam02de(jab, u_protanomaly_colors[i]));
+    return min_dist;
+}
+float minDistDeuteranomaly(vec3 jab) {
+    float min_dist = 9999.;
+    for (int i = 0; i < 75; i++)
+        if (u_deuteranomaly_colors[i][0] >= -999. && u_deuteranomaly_colors[i][1] >= -999. && u_deuteranomaly_colors[i][2] >= -999.)
+            min_dist = min(min_dist, cam02de(jab, u_deuteranomaly_colors[i]));
+    return min_dist;
+}
+float minDistTritanomaly(vec3 jab) {
+    float min_dist = 9999.;
+    for (int i = 0; i < 75; i++)
+        if (u_tritanomaly_colors[i][0] >= -999. && u_tritanomaly_colors[i][1] >= -999. && u_tritanomaly_colors[i][2] >= -999.)
+            min_dist = min(min_dist, cam02de(jab, u_tritanomaly_colors[i]));
     return min_dist;
 }
 
@@ -627,17 +660,17 @@ float cvdMinDist(vec3 rgb) {
     //cvd_dist = minDist(cvd_forward_protanomaly(jab, u_protanomaly_severity));
     //cvd_num = int(cvd_dist / 2.0);
     for (int i = 0; i <= 5; i++)
-        min_dist = min(min_dist, minDist(linearRgbToJab(cvd_forward_protanomaly(rgb_linear, float(i) * u_protanomaly_severity / float(cvd_num)))));
+        min_dist = min(min_dist, minDistProtanomaly(linearRgbToJab(cvd_forward_protanomaly(rgb_linear, float(i) * u_protanomaly_severity / float(cvd_num)))));
 
     //cvd_dist = minDist(cvd_forward_deuteranomaly(jab, u_deuteranomaly_severity));
     //cvd_num = int(cvd_dist / 2.0);
     for (int i = 0; i <= 5; i++)
-        min_dist = min(min_dist, minDist(linearRgbToJab(cvd_forward_deuteranomaly(rgb_linear, float(i) * u_deuteranomaly_severity / float(cvd_num)))));
+        min_dist = min(min_dist, minDistDeuteranomaly(linearRgbToJab(cvd_forward_deuteranomaly(rgb_linear, float(i) * u_deuteranomaly_severity / float(cvd_num)))));
 
     //cvd_dist = minDist(cvd_forward_tritanomaly(jab, u_tritanomaly_severity));
     //cvd_num = int(cvd_dist / 2.0);
     for (int i = 0; i <= 5; i++)
-        min_dist = min(min_dist, minDist(linearRgbToJab(cvd_forward_tritanomaly(rgb_linear, float(i) * u_tritanomaly_severity / float(cvd_num)))));
+        min_dist = min(min_dist, minDistTritanomaly(linearRgbToJab(cvd_forward_tritanomaly(rgb_linear, float(i) * u_tritanomaly_severity / float(cvd_num)))));
 
     return min_dist;
 }
