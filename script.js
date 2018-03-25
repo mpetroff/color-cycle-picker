@@ -44,10 +44,10 @@ function minDist(jab) {
     return min_dist;
 }
 
-function minLightnessDist(jab) {
+function minLightnessDist(J) {
     let min_dist = 9999;
     for (let i = 0; i < colors.length; i++)
-        min_dist = Math.min(min_dist, Math.abs(jab.J - colors[i][0].J));
+        min_dist = Math.min(min_dist, Math.abs(J - colors[i][0].J));
     return min_dist;
 }
 
@@ -64,7 +64,7 @@ d3.select('#colorDots').on('mousemove', function() {
     const jab = coordToJab(d3.mouse(this));
     const c = jab.rgb();
 
-    const min_light_dist = minLightnessDist(jab);
+    const min_light_dist = minLightnessDist(jab.J);
 
     let min_dist = 9999;
     let cvd_colors = calcCVD(jab);
@@ -238,7 +238,7 @@ function mouseClick() {
     const c = jab.rgb();
     
     if (minDist(jab) > Number(document.getElementById('colorDistInput').value) &&
-        minLightnessDist(jab) > Number(document.getElementById('lightDistInput').value) &&
+        minLightnessDist(jab.J) > Number(document.getElementById('lightDistInput').value) &&
         c.displayable()) {
         colors.push(calcCVD(jab));
         
