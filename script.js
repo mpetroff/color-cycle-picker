@@ -9,7 +9,7 @@ Sortable.create(swatchList, {
     onFilter: function(evt) {
         if (evt.target.className == 'js-remove') {
             for (let i = 0; i < colors.length; i++) {
-                if (colors[i][0] == evt.item.dataset.color) {
+                if (colors[i].base[0] == evt.item.dataset.color) {
                     colors.splice(i, 1);
                     render();
                 }
@@ -26,7 +26,7 @@ Sortable.create(swatchList, {
         colors = Array.prototype.map.call(evt.target.childNodes, function(x) {
             const c = colorToHex(d3.rgb(x.dataset.color));
             for (let i = 0; i < colors.length; i++) {
-                if (colorToHex(colors[i][0].rgb()) == c)
+                if (colorToHex(colors[i].base[0].rgb()) == c)
                     return colors[i];
             }
         });
@@ -404,7 +404,7 @@ let too_close = false;
 function configChange() {
     // Recalculate CVD simulation
     for (let i = 0; i < colors.length; i++)
-        colors[i] = calcCVD(colors[i][0]);
+        colors[i] = calcCVD(colors[i].base[0]);
 
     // Check for colors that are too close
     const color_dist = Number(document.getElementById('colorDistInput').value);
@@ -413,15 +413,17 @@ function configChange() {
     for (let i = 0; i < colors.length; i++) {
         let min_color_dist = 9999;
         let min_light_dist = 9999;
-        let jab = colors[i][0];
+        let cvd_colors = calcCVD(colors[i].base[0]);
         for (let j = 0; j < colors.length; j++) {
             if (i != j) {
-                for (let k = 0; k < colors[j].length; k++)
-                    min_color_dist = Math.min(min_color_dist, jab.de(colors[j][k]));
-                min_light_dist = Math.min(min_light_dist, Math.abs(jab.J - colors[j][0].J));
+                Object.keys(cvd_colors).forEach(function(key) {
+                    for (let k = 0; k < colors[j][key].length; k++)
+                        min_color_dist = Math.min(min_color_dist, cvd_colors[key][k].de(colors[j][key][k]));
+                });
+                min_light_dist = Math.min(min_light_dist, Math.abs(colors[i].base[0].J - colors[j].base[0].J));
             }
         }
-        const elem = document.getElementById('color' + colorToHex(colors[i][0].rgb()).slice(1));
+        const elem = document.getElementById('color' + colorToHex(colors[i].base[0].rgb()).slice(1));
         if (min_color_dist < color_dist || min_light_dist < light_dist) {
             too_close = true;
             elem.classList.add('list-group-item-danger');
@@ -431,7 +433,7 @@ function configChange() {
 
         // TODO: remove these debug statements
         if (min_color_dist < color_dist)
-            console.log('color ' + i + 'is too close in color: ' + min_color_dist);
+            console.log('color ' + i + ' is too close in color: ' + min_color_dist);
         if (min_light_dist < light_dist)
             console.log('color ' + i + ' is too close in lightness: ' + min_light_dist);
     }
