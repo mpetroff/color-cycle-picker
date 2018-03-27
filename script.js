@@ -83,7 +83,7 @@ d3.select('#colorDots').on('mousemove', function() {
         colorDots.style.cursor = 'default';
     } else {
         colorDots.style.cursor = 'crosshair';
-        cs.push({base: [jab]});
+        cs.push({base: [jab], tooClose: false});
     }
     updateViz(cs);
     
@@ -109,7 +109,7 @@ let vizLightnessColor = vizLightness.append("g")
 function updateViz(cs) {
     let c = [];
     for (let i = 0; i < cs.length; i++)
-        c.push(cs[i].base[0]);
+        c.push({color: cs[i].base[0], tooClose: cs[i].tooClose});
 
     // Large swatches
     let swatches = d3.select('#vizLargeSwatches');
@@ -125,7 +125,7 @@ function updateViz(cs) {
         .attr("width", "100%")
         .attr("height", 50)
       .merge(rects)
-        .attr("fill", d => d.rgb().toString());
+        .attr("fill", d => d.color.rgb().toString());
 
     // Medium swatches
     swatches = d3.select('#vizMediumSwatches');
@@ -141,7 +141,7 @@ function updateViz(cs) {
         .attr("width", 30)
         .attr("height", 30)
       .merge(rects)
-        .attr("fill", d => d.rgb().toString());
+        .attr("fill", d => d.color.rgb().toString());
 
     // Small swatches
     swatches = d3.select('#vizSmallSwatches');
@@ -157,7 +157,7 @@ function updateViz(cs) {
         .attr("width", 10)
         .attr("height", 10)
       .merge(rects)
-        .attr("fill", d => d.rgb().toString());
+        .attr("fill", d => d.color.rgb().toString());
 
     // Circle swatches
     swatches = d3.select('#vizCircles');
@@ -174,7 +174,7 @@ function updateViz(cs) {
         .attr("fill", "none")
         .attr("stroke-width", 2)
       .merge(circles)
-        .attr("stroke", d => d.rgb().toString());
+        .attr("stroke", d => d.color.rgb().toString());
 
     // Line swatches
     swatches = d3.select('#vizLines');
@@ -190,7 +190,7 @@ function updateViz(cs) {
         .attr("width", "100%")
         .attr("height", 2)
       .merge(rects)
-        .attr("fill", d => d.rgb().toString());
+        .attr("fill", d => d.color.rgb().toString());
 
     // Vertical line swatches for lightness visualization
     swatches = vizLightnessGray;
@@ -203,8 +203,8 @@ function updateViz(cs) {
         .attr("width", 2)
         .attr("height", 20)
       .merge(rects)
-        .attr("x", d => sliderScale(d.J) + sliderMargin.left - 1)
-        .attr("fill", d => d3.jab(d.J, 0, 0).rgb().toString());
+        .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 1)
+        .attr("fill", d => d3.jab(d.color.J, 0, 0).rgb().toString());
     swatches = vizLightnessColor;
     // Update contents
     rects = swatches.selectAll("rect")
@@ -215,13 +215,13 @@ function updateViz(cs) {
         .attr("width", 2)
         .attr("height", 20)
       .merge(rects)
-        .attr("x", d => sliderScale(d.J) + sliderMargin.left - 1)
-        .attr("fill", d => d.rgb().toString());
+        .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 1)
+        .attr("fill", d => d.color.rgb().toString());
 
     // Update output text area
     updateOutput();
     
-    // Dots of gamut
+    // Dots on gamut
     swatches = d3.select('#colorDots');
     if (colorDots.style.cursor == 'crosshair')
         c = c.slice(0, c.length - 1);
@@ -232,9 +232,11 @@ function updateViz(cs) {
     circles.enter().append("circle")
         .attr("r", 5)
       .merge(circles)
-        .attr("cx", d => (d.a + 50) / 100 * canvas.width)
-        .attr("cy", d => canvas.height - (d.b + 50) / 100 * canvas.height)
-        .attr("fill", d => d.rgb().toString());
+        .attr("cx", d => (d.color.a + 50) / 100 * canvas.width)
+        .attr("cy", d => canvas.height - (d.color.b + 50) / 100 * canvas.height)
+        .attr("fill", d => d.color.rgb().toString())
+        .attr("stroke", d => d.tooClose ? "#800" : "none")
+        .attr("stroke-width", d => d.tooClose ? "3" : "0");
 }
 
 d3.select('#colorDots').on('click', mouseClick);
@@ -250,7 +252,9 @@ function mouseClick() {
     if (minDist(jab) > Number(document.getElementById('colorDistInput').value) &&
         minLightnessDist(jab.J) > Number(document.getElementById('lightDistInput').value) &&
         c.displayable()) {
-        colors.push(calcCVD(jab));
+        let cs = calcCVD(jab);
+        cs.tooClose = false;
+        colors.push(cs);
         
         let li = document.createElement('li');
         li.className = 'list-group-item list-group-item-action';
@@ -427,8 +431,10 @@ function configChange() {
         if (min_color_dist < color_dist || min_light_dist < light_dist) {
             too_close = true;
             elem.classList.add('list-group-item-danger');
+            colors[i].tooClose = true;
         } else {
             elem.classList.remove('list-group-item-danger');
+            colors[i].tooClose = false;
         }
 
         // TODO: remove these debug statements
@@ -439,6 +445,7 @@ function configChange() {
     }
 
     updateOutput();
+    updateViz(colors);
     render();
 }
 
