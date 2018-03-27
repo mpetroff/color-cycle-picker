@@ -239,14 +239,17 @@ function updateViz(cs) {
         .attr("stroke-width", d => d.tooClose ? "3" : "0");
 }
 
-d3.select('#colorDots').on('click', mouseClick);
-function mouseClick() {
+d3.select('#colorDots').on('click', function() {
+    const jab = coordToJab(d3.mouse(this));
+    addColor(jab);
+});
+
+function addColor(jab) {
     if (colors.length >= 12) {
         alert('Only 12 colors are supported (due to WebGL limitations)!')
         return;
     }
 
-    const jab = coordToJab(d3.mouse(this));
     const c = jab.rgb();
 
     if (minDist(jab) > Number(document.getElementById('colorDistInput').value) &&
@@ -330,7 +333,7 @@ sliderGradient.append("stop")
    .attr("offset", "100%")
    .attr("style", "stop-color: hsl(0, 0%, 95%);");
 
-let sliderScale = d3.scaleLinear()
+const sliderScale = d3.scaleLinear()
     .domain([35, 95])
     .range([0, sliderWidth])
     .clamp(true);
@@ -453,6 +456,22 @@ function configChange() {
     updateViz(colors);
     render();
 }
+
+const colorInput = document.getElementById('colorInput');
+document.getElementById('colorAdd').addEventListener('click', function() {
+    const c = d3.color(colorInput.value);
+    if (c) {
+        const jab = d3.jab(c);
+        if (jab.J < sliderScale.domain()[0] || jab.J > sliderScale.domain()[1]) {
+            alert("Color's lightness is out of range!");
+        } else {
+            addColor(jab);
+            colorInput.value = '';
+        }
+    } else {
+        alert('Invalid color specifier!');
+    }
+});
 
 webglInit(canvas);
 adjustSlider(60);   // Sets inital lightness and renders visualization
