@@ -376,11 +376,16 @@ d3.select('#tritanomalyInput').on('change', configChange);
 function updateOutput() {
     // Update output text area
     let output = '';
-    if (too_close)
+    if (!document.getElementById('settings').checkValidity())
+        output = 'Settings are invalid!'
+    else if (too_close)
         output = 'Colors are too close!'
-    else
+    else {
         for (let i = 0; i < colors.length; i++)
             output += colorToHex(colors[i].base[0].rgb()) + ', ';
+        if (output.length > 2)
+            output = output.slice(0, output.length - 2);
+    }
     document.getElementById('output').value = output;
 }
 
