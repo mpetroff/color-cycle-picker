@@ -404,11 +404,9 @@ function dragUpdate(d, _this, idx, type, ignoreColor) {
                   .attr("stroke-width", colors[i].tooClose ? "3" : "0");
         }
 
-        if (type == 'dot')
-            colors[idx].ignore = true;
+        colors[idx].ignore = true;
         webglRender(c.base[0].J, true);
-        if (type == 'dot')
-            colors[idx].ignore = false;
+        colors[idx].ignore = false;
     } else {
         configChange(true, false);
     }
