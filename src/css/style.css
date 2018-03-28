@@ -1,6 +1,5 @@
 body {
   padding-top: 2rem;
-  padding-bottom: 2rem;
 }
 
 #swatchlist li {
@@ -73,4 +72,8 @@ body {
 
 .color-dot, .color-rect {
   cursor: pointer;
+}
+
+footer {
+  font-size: 14px;
 }
