@@ -34,7 +34,7 @@ function cvd_forward(rgb, cvd_type, severity) {
         mat[1][0] * rgb_linear[0] + mat[1][1] * rgb_linear[1] + mat[1][2] * rgb_linear[2],
         mat[2][0] * rgb_linear[0] + mat[2][1] * rgb_linear[1] + mat[2][2] * rgb_linear[2]
     ];
-    let result = result_linear.map(n => n <= 0.0031308 ? 12.92 * n : 1.055*Math.pow(n, 1 / 2.4) - 0.055);
+    let result = result_linear.map(n => n <= 0.0031308 ? 12.92 * n : 1.055 * Math.pow(n, 1 / 2.4) - 0.055);
     result = result.map(n => n * 255);
     return d3.rgb(result[0], result[1], result[2]);
 }

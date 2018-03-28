@@ -1,5 +1,8 @@
 function webglInit(canvas) {
-    gl = canvas.getContext('experimental-webgl', {alpha: true, depth: false});
+    gl = canvas.getContext('experimental-webgl', {
+        alpha: true,
+        depth: false
+    });
 
     // Create viewport for entire canvas
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
@@ -38,7 +41,7 @@ function webglInit(canvas) {
     // Provide texture coordinates for rectangle
     const texCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,1,1,1,1,-1,-1,1,1,-1,-1,-1]), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1]), gl.STATIC_DRAW);
     gl.vertexAttribPointer(program.texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 }
 
@@ -46,17 +49,17 @@ function webglRender(J, ignoreLightness) {
     // Set lightness
     let u = gl.getUniformLocation(program, 'u_J');
     gl.uniform1f(u, J);
-    
+
     if (ignoreLightness || minLightnessDist(J) > Number(document.getElementById('lightDistInput').value)) {
         // Set existing colors
         let colorArrays = {};
-        colorArrays.base = Array(12*3);
+        colorArrays.base = Array(12 * 3);
         colorArrays.base.fill(-1000);
-        colorArrays.protanomaly = Array(60*3);
+        colorArrays.protanomaly = Array(60 * 3);
         colorArrays.protanomaly.fill(-1000);
-        colorArrays.deuteranomaly = Array(60*3);
+        colorArrays.deuteranomaly = Array(60 * 3);
         colorArrays.deuteranomaly.fill(-1000);
-        colorArrays.tritanomaly = Array(60*3);
+        colorArrays.tritanomaly = Array(60 * 3);
         colorArrays.tritanomaly.fill(-1000);
         Object.keys(colorArrays).forEach(function(key) {
             let n = 0;

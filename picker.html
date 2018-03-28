@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <head>
-<meta charset="utf-8"/>
-<title>Color Cycle Picker</title>
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8"/>
+  <title>Color Cycle Picker</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="container">
   <h1>Color Cycle Picker</h1>
-  
+
   <div class="row">
     <div class="col-sm-4">
       <div style="position: relative; height: 300px; width: 300px;">
@@ -26,7 +26,7 @@
     </div> <!-- col-sm -->
     <div class="col-sm-3">
       <ul class="list-group" id="swatchlist"></ul>
-    </div> <!-- col-sm --> 
+    </div> <!-- col-sm -->
     <div class="col-sm-5">
       <div class="row">
         <div class="col-sm-5">
@@ -44,7 +44,7 @@
     </div> <!-- col-sm -->
   </div> <!-- row -->
   <div class="row">
-     <textarea readonly id="output"></textarea> 
+    <textarea readonly id="output"></textarea>
   </div> <!-- row -->
 
   <div class="card">
@@ -52,71 +52,71 @@
       Distance &amp; CVD Simulation Settings
     </div>
     <form id="settings">
-    <ul class="list-group list-group-flush">
-      <li class="list-group-item">
-        <div class="row">
-          <div class="col-sm-4">
-            <div class="form-group">
-              <label for="colorDistInput">Minimum Color Distance [10, 50]</label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="colorDistInput" value="20" step="1" min="10" max="50">
-                <div class="input-group-append">
-                  <div class="input-group-text">&Delta;ab</div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          <div class="row">
+            <div class="col-sm-4">
+              <div class="form-group">
+                <label for="colorDistInput">Minimum Color Distance [10, 50]</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="colorDistInput" value="20" step="1" min="10" max="50">
+                  <div class="input-group-append">
+                    <div class="input-group-text">&Delta;ab</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div> <!-- col-sm -->
-          <div class="col-sm-4">
-            <div class="form-group">
-              <label for="lightDistInput">Minimum Lightness Distance [1, 99]</label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="lightDistInput" value="2" step="1" min="1" max="99">
-                <div class="input-group-append">
-                  <div class="input-group-text">&Delta;J</div>
+            </div> <!-- col-sm -->
+            <div class="col-sm-4">
+              <div class="form-group">
+                <label for="lightDistInput">Minimum Lightness Distance [1, 99]</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="lightDistInput" value="2" step="1" min="1" max="99">
+                  <div class="input-group-append">
+                    <div class="input-group-text">&Delta;J</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div> <!-- col-sm -->
-        </div> <!-- row -->
-      </li>
-      <li class="list-group-item">
-        <div class="row">
-          <div class="col-sm-4">
-            <div class="form-group">
-              <label for="deuteranomalyInput">Deuteranomaly [25, 100]</label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="deuteranomalyInput" value="50" step="1" min="25" max="100">
-                <div class="input-group-append">
-                  <div class="input-group-text">%</div>
+            </div> <!-- col-sm -->
+          </div> <!-- row -->
+        </li>
+        <li class="list-group-item">
+          <div class="row">
+            <div class="col-sm-4">
+              <div class="form-group">
+                <label for="deuteranomalyInput">Deuteranomaly [25, 100]</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="deuteranomalyInput" value="50" step="1" min="25" max="100">
+                  <div class="input-group-append">
+                    <div class="input-group-text">%</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div> <!-- col-sm -->
-          <div class="col-sm-4">
-            <div class="form-group">
-              <label for="protanomalyInput">Protanomaly [25, 100]</label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="protanomalyInput" value="50" step="1" min="25" max="100">
-                <div class="input-group-append">
-                  <div class="input-group-text">%</div>
+            </div> <!-- col-sm -->
+            <div class="col-sm-4">
+              <div class="form-group">
+                <label for="protanomalyInput">Protanomaly [25, 100]</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="protanomalyInput" value="50" step="1" min="25" max="100">
+                  <div class="input-group-append">
+                    <div class="input-group-text">%</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div> <!-- col-sm -->
-          <div class="col-sm-4">
-            <div class="form-group">
-              <label for="tritanomalyInput">Tritanomaly [25, 100]</label>
-              <div class="input-group">
-                <input type="number" class="form-control" id="tritanomalyInput" value="50" step="1" min="25" max="100">
-                <div class="input-group-append">
-                  <div class="input-group-text">%</div>
+            </div> <!-- col-sm -->
+            <div class="col-sm-4">
+              <div class="form-group">
+                <label for="tritanomalyInput">Tritanomaly [25, 100]</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="tritanomalyInput" value="50" step="1" min="25" max="100">
+                  <div class="input-group-append">
+                    <div class="input-group-text">%</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div> <!-- col-sm -->
-        </div> <!-- row -->
-      </li>
-    </ul>
+            </div> <!-- col-sm -->
+          </div> <!-- row -->
+        </li>
+      </ul>
     </form>
   </div> <!-- card -->
 </div> <!-- container -->

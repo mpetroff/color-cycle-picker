@@ -38,7 +38,7 @@ function minDist(jab) {
     let cvd_colors = calcCVD(jab);
     let min_dist = 9999;
     Object.keys(cvd_colors).forEach(function(key) {
-        for (let k = 0; k < cvd_colors[key].length; k ++)
+        for (let k = 0; k < cvd_colors[key].length; k++)
             for (let i = 0; i < colors.length; i++)
                 for (let j = 0; j < colors[i][key].length; j++)
                     min_dist = Math.min(min_dist, cvd_colors[key][k].de(colors[i][key][j]));
@@ -58,7 +58,7 @@ function coordToJab(coords) {
         height = canvas.height,
         x = coords[0],
         y = coords[1];
-    return d3.jab(sliderVal, x/width * 100 - 50, (height - y)/height * 100 - 50);
+    return d3.jab(sliderVal, x / width * 100 - 50, (height - y) / height * 100 - 50);
 }
 
 
@@ -81,11 +81,14 @@ d3.select('#colorDots').on('mousemove', function() {
         colorDots.style.cursor = 'default';
     } else {
         colorDots.style.cursor = 'crosshair';
-        cs.push({base: [jab], tooClose: false});
+        cs.push({
+            base: [jab],
+            tooClose: false
+        });
     }
     updateViz(cs);
-    
-    
+
+
 });
 
 function colorToHex(c) {
@@ -108,7 +111,10 @@ function updateViz(cs, do_not_update_dots) {
     do_not_update_dots = do_not_update_dots ? true : false;
     let c = [];
     for (let i = 0; i < cs.length; i++)
-        c.push({color: cs[i].base[0], tooClose: cs[i].tooClose});
+        c.push({
+            color: cs[i].base[0],
+            tooClose: cs[i].tooClose
+        });
 
     // Large swatches
     let swatches = d3.select('#vizLargeSwatches');
@@ -116,11 +122,11 @@ function updateViz(cs, do_not_update_dots) {
     swatches.style("height", c.length * 50 + 'px');
     // Update contents
     let rects = swatches.selectAll("rect")
-      .data(c);
+        .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
         .attr("x", 0)
-        .attr("y", (d, i) => i*50)
+        .attr("y", (d, i) => i * 50)
         .attr("width", "100%")
         .attr("height", 50)
       .merge(rects)
@@ -132,7 +138,7 @@ function updateViz(cs, do_not_update_dots) {
     swatches.style("height", Math.ceil(c.length / 3) * 35 + 'px');
     // Update contents
     rects = swatches.selectAll("rect")
-      .data(c);
+        .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
         .attr("x", (d, i) => (i % 3) * 35)
@@ -148,7 +154,7 @@ function updateViz(cs, do_not_update_dots) {
     swatches.style("height", Math.ceil(c.length / 3) * 35 + 'px');
     // Update contents
     rects = swatches.selectAll("rect")
-      .data(c);
+        .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
         .attr("x", (d, i) => (i % 3) * 35 + 10)
@@ -164,7 +170,7 @@ function updateViz(cs, do_not_update_dots) {
     swatches.style("height", Math.ceil(c.length / 3) * 35 + 'px');
     // Update contents
     let circles = swatches.selectAll("circle")
-      .data(c);
+        .data(c);
     circles.exit().remove();
     circles.enter().append("circle")
         .attr("cx", (d, i) => (i % 3) * 35 + 15)
@@ -181,11 +187,11 @@ function updateViz(cs, do_not_update_dots) {
     swatches.style("height", c.length * 20 + 'px');
     // Update contents
     rects = swatches.selectAll("rect")
-      .data(c);
+        .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
         .attr("x", 0)
-        .attr("y", (d, i) => i*20)
+        .attr("y", (d, i) => i * 20)
         .attr("width", "100%")
         .attr("height", 2)
       .merge(rects)
@@ -195,16 +201,16 @@ function updateViz(cs, do_not_update_dots) {
     swatches = vizLightnessGray;
     // Update contents
     rects = swatches.selectAll("rect")
-      .data(c);
+        .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
         .attr("y", 0)
         .attr("width", 4)
         .attr("height", 20)
         .call(d3.drag()
-          .on('start', lineDragStarted)
-          .on('drag', lineDragged)
-          .on('end', lineDragEnded))
+            .on('start', lineDragStarted)
+            .on('drag', lineDragged)
+            .on('end', lineDragEnded))
       .merge(rects)
         .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 2)
         .attr("fill", d => d3.jab(d.color.J, 0, 0).rgb().toString())
@@ -213,16 +219,16 @@ function updateViz(cs, do_not_update_dots) {
     swatches = vizLightnessColor;
     // Update contents
     rects = swatches.selectAll("rect")
-      .data(c);
+        .data(c);
     rects.exit().remove();
     rects.enter().append("rect")
         .attr("y", 0)
         .attr("width", 4)
         .attr("height", 20)
         .call(d3.drag()
-          .on('start', lineDragStarted)
-          .on('drag', lineDragged)
-          .on('end', lineDragEnded))
+            .on('start', lineDragStarted)
+            .on('drag', lineDragged)
+            .on('end', lineDragEnded))
       .merge(rects)
         .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 2)
         .attr("fill", d => d.color.rgb().toString())
@@ -231,30 +237,30 @@ function updateViz(cs, do_not_update_dots) {
 
     // Update output text area
     updateOutput();
-    
+
     // Dots on gamut
     if (!do_not_update_dots) {
-    swatches = d3.select('#colorDots');
-    if (colorDots.style.cursor == 'crosshair')
-        c = c.slice(0, c.length - 1);
-    // Update contents
-    circles = swatches.selectAll("circle")
-      .data(c);
-    circles.exit().remove();
-    circles.enter().append("circle")
-        .attr("r", 5)
-        .call(d3.drag()
-          .on('start', dotDragStarted)
-          .on('drag', dotDragged)
-          .on('end', dotDragEnded))
-      .merge(circles)
-        .attr("cx", d => (d.color.a + 50) / 100 * canvas.width)
-        .attr("cy", d => canvas.height - (d.color.b + 50) / 100 * canvas.height)
-        .attr("fill", d => d.color.rgb().toString())
-        .attr("stroke", d => d.tooClose ? "#800" : "none")
-        .attr("stroke-width", d => d.tooClose ? "3" : "0")
-        .attr("id", (d, i) => 'colordot' + i)
-        .attr("class", 'color-dot');
+        swatches = d3.select('#colorDots');
+        if (colorDots.style.cursor == 'crosshair')
+            c = c.slice(0, c.length - 1);
+        // Update contents
+        circles = swatches.selectAll("circle")
+            .data(c);
+        circles.exit().remove();
+        circles.enter().append("circle")
+            .attr("r", 5)
+            .call(d3.drag()
+                .on('start', dotDragStarted)
+                .on('drag', dotDragged)
+                .on('end', dotDragEnded))
+          .merge(circles)
+            .attr("cx", d => (d.color.a + 50) / 100 * canvas.width)
+            .attr("cy", d => canvas.height - (d.color.b + 50) / 100 * canvas.height)
+            .attr("fill", d => d.color.rgb().toString())
+            .attr("stroke", d => d.tooClose ? "#800" : "none")
+            .attr("stroke-width", d => d.tooClose ? "3" : "0")
+            .attr("id", (d, i) => 'colordot' + i)
+            .attr("class", 'color-dot');
     }
 }
 
@@ -350,7 +356,7 @@ function addColor(jab) {
         let cs = calcCVD(jab);
         cs.tooClose = false;
         colors.push(cs);
-        
+
         let li = document.createElement('li');
         li.className = 'list-group-item list-group-item-action';
         li.innerHTML = '<span class="swatchListBlock" style="background:' +
@@ -360,9 +366,9 @@ function addColor(jab) {
         li.dataset.color = jab;
         li.id = 'color' + colorToHex(c).slice(1);
         swatchList.appendChild(li);
-        
+
         updateViz(colors);
-        
+
         render();
         canvas.style.cursor = 'default';
     }
@@ -372,23 +378,26 @@ function render(ignoreLightness) {
     webglRender(sliderVal, ignoreLightness);
 }
 
-const sliderMargin = {right: 10, left: 10},
+const sliderMargin = {
+        right: 10,
+        left: 10
+    },
     sliderWidth = +vizLightness.attr("width") - sliderMargin.left - sliderMargin.right,
     sliderHeight = 20;
 
 const sliderGradient = vizLightness.append("defs").append("linearGradient")
-   .attr("id", "grad")
-   .attr("x1", "0%")
-   .attr("x2", "100%")
-   .attr("y1", "0%")
-   .attr("y2", "0%")
-   .attr("gradientUnits", "userSpaceOnUse");
+    .attr("id", "grad")
+    .attr("x1", "0%")
+    .attr("x2", "100%")
+    .attr("y1", "0%")
+    .attr("y2", "0%")
+    .attr("gradientUnits", "userSpaceOnUse");
 sliderGradient.append("stop")
-   .attr("offset", "0%")
-   .attr("style", "stop-color: hsl(0, 0%, 35%);");
+    .attr("offset", "0%")
+    .attr("style", "stop-color: hsl(0, 0%, 35%);");
 sliderGradient.append("stop")
-   .attr("offset", "100%")
-   .attr("style", "stop-color: hsl(0, 0%, 95%);");
+    .attr("offset", "100%")
+    .attr("style", "stop-color: hsl(0, 0%, 95%);");
 
 const sliderScale = d3.scaleLinear()
     .domain([35, 95])
@@ -397,7 +406,7 @@ const sliderScale = d3.scaleLinear()
 
 let slider = vizLightness.append("g")
     .attr("class", "slider")
-    .attr("transform", "translate(" + sliderMargin.left + "," + sliderHeight / 2+ ")");
+    .attr("transform", "translate(" + sliderMargin.left + "," + sliderHeight / 2 + ")");
 slider.append("line")
     .attr("class", "track-inset")
     .attr("x1", sliderScale.range()[0])
@@ -409,13 +418,17 @@ let trackOverlay = slider.append("line")
     .attr("x1", sliderScale.range()[0])
     .attr("x2", sliderScale.range()[1])
     .call(d3.drag()
-        .on("start.interrupt", function() { slider.interrupt(); })
-        .on("start drag", function() { adjustSlider(sliderScale.invert(d3.event.x)); }));
+        .on("start.interrupt", function() {
+            slider.interrupt();
+        })
+        .on("start drag", function() {
+            adjustSlider(sliderScale.invert(d3.event.x));
+        }));
 
 function adjustSlider(val) {
-  sliderVal = val;
-  sliderHandle.attr("cx", sliderScale(val));
-  webglRender(val);
+    sliderVal = val;
+    sliderHandle.attr("cx", sliderScale(val));
+    webglRender(val);
 }
 
 trackOverlay.on('mousemove', function() {
@@ -450,7 +463,9 @@ function updateOutput() {
 }
 
 function calcCVD(jab) {
-    let color = {'base': [jab]};
+    let color = {
+        'base': [jab]
+    };
     const c = jab.rgb();
     const cvd_config = {
         'protanomaly': Number(document.getElementById('protanomalyInput').value),
@@ -462,7 +477,7 @@ function calcCVD(jab) {
         color[key] = [cvd_c];
         //const cvd_dist = jab.de(cvd_c);
         //const cvd_num = Math.round(cvd_dist / 2);
-        const cvd_num = 4;  // Dynamic is better but isn't possible in shader
+        const cvd_num = 4; // Dynamic is better but isn't possible in shader
         for (let i = 1; i <= cvd_num; i++)
             color[key].push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
     });
@@ -470,6 +485,7 @@ function calcCVD(jab) {
 }
 
 let too_close = false;
+
 function configChange(do_not_recalc_cvd, do_not_render) {
     do_not_recalc_cvd = do_not_recalc_cvd ? true : false;
     do_not_render = do_not_render ? true : false;
@@ -536,4 +552,4 @@ document.getElementById('colorAdd').addEventListener('click', function() {
 });
 
 webglInit(canvas);
-adjustSlider(60);   // Sets inital lightness and renders visualization
+adjustSlider(60); // Sets inital lightness and renders visualization
