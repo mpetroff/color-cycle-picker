@@ -29,8 +29,9 @@ let colorDots = document.getElementById('colorDots');
 let swatchList = document.getElementById('swatchlist');
 
 // Color cycle colors
-let colors = [];
-let too_close = false;
+let colors = [],
+    too_close = false,
+    out_of_gamut = false;
 
 // Create lightness slider input
 let sliderVal = 35;
@@ -171,6 +172,9 @@ function coordToJab(coords) {
 
 // Convert D3 color to hex code
 function colorToHex(c) {
+    if (!c.displayable())
+        return 'Out of Gamut!';
+
     let r = Math.round(c.r).toString(16),
         g = Math.round(c.g).toString(16),
         b = Math.round(c.b).toString(16);
@@ -384,8 +388,10 @@ function dragUpdate(d, _this, idx, type, ignoreColor) {
 
     // Update swatch list
     elem.dataset.color = c.base[0];
-    elem.id = 'color' + colorToHex(c.base[0].rgb()).slice(1);
+    const hex = colorToHex(c.base[0].rgb());
+    elem.id = 'color' + hex.slice(1);
     elem.childNodes[0].style.background = c.base[0].rgb().toString();
+    elem.children[1].innerHTML = hex;
 
     if (ignoreColor) {
         // Update dot
@@ -466,9 +472,9 @@ function addColor(jab) {
         let li = document.createElement('li');
         li.className = 'list-group-item list-group-item-action';
         li.innerHTML = '<span class="swatchListBlock" style="background:' +
-            jab.rgb().toString() + '">&#x2588;&#x2588;&#x2588;&#x2588;</span>' +
+            jab.rgb().toString() + '">&#x2588;&#x2588;&#x2588;&#x2588;</span><span>' +
             colorToHex(jab.rgb()) +
-            '<span class="swatchButtons"><span class="js-remove">&#x2716;</span></span>';
+            '</span><span class="swatchButtons"><span class="js-remove">&#x2716;</span></span>';
 
         li.dataset.color = jab;
         li.id = 'color' + colorToHex(c).slice(1);
@@ -492,6 +498,8 @@ function updateOutput() {
     let output = '';
     if (!document.getElementById('settings').checkValidity())
         output = 'Settings are invalid!';
+    else if (out_of_gamut)
+        output = 'At least one color is out of gamut!';
     else if (too_close)
         output = 'Colors are too close!';
     else {
@@ -540,7 +548,7 @@ function configChange(do_not_recalc_cvd, do_not_render) {
     // Check for colors that are too close
     const color_dist = Number(document.getElementById('colorDistInput').value);
     const light_dist = Number(document.getElementById('lightDistInput').value);
-    too_close = false;
+    too_close = out_of_gamut = false;
     for (let i = 0; i < colors.length; i++) {
         let min_color_dist = 9999;
         let min_light_dist = 9999;
@@ -556,10 +564,16 @@ function configChange(do_not_recalc_cvd, do_not_render) {
                     Math.abs(colors[i].base[0].J - colors[j].base[0].J));
             }
         }
+        const rgb = colors[i].base[0].rgb();
         const elem = document.getElementById('color' +
-            colorToHex(colors[i].base[0].rgb()).slice(1));
-        if (min_color_dist < color_dist || min_light_dist < light_dist) {
-            too_close = true;
+            colorToHex(rgb).slice(1));
+        const displayable = rgb.displayable();
+        if (min_color_dist < color_dist || min_light_dist < light_dist ||
+            !displayable) {
+            if (!displayable)
+                out_of_gamut = true;
+            else
+                too_close = true;
             elem.classList.add('list-group-item-danger');
             colors[i].tooClose = true;
         } else {
