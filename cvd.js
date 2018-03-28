@@ -51,9 +51,9 @@ function machado_et_al_2009_matrix(cvd_type, severity) {
     const high_matrix = MACHADO_ET_AL_MATRICES[cvd_type][high];
     let result = [];
     for (let i = 0; i < 3; i++) {
-        let row = []
+        let row = [];
         for (let j = 0; j < 3; j++) {
-            row.push((1 - fraction / 10.0) * low_matrix[i][j] + fraction / 10.0 * high_matrix[i][j])
+            row.push((1 - fraction / 10.0) * low_matrix[i][j] + fraction / 10.0 * high_matrix[i][j]);
         }
         result.push(row);
     }
@@ -233,4 +233,4 @@ const MACHADO_ET_AL_MATRICES = {
           [ 0.004733,  0.691367,  0.303900],
          ],
     }
-}
+};

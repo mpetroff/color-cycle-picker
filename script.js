@@ -4,8 +4,7 @@ let colorDots = document.getElementById('colorDots');
 let sliderVal = 35;
 
 Sortable.create(swatchList, {
-    //filter: '.js-remove',
-    filter: evt => evt.target.className == 'js-remove' || evt.target.className == 'js-edit',
+    filter: evt => evt.target.className == 'js-remove',
     onFilter: function(evt) {
         if (evt.target.className == 'js-remove') {
             for (let i = 0; i < colors.length; i++) {
@@ -14,11 +13,10 @@ Sortable.create(swatchList, {
                     render();
                 }
             }
-            evt.item && evt.item.parentNode.removeChild(evt.item);
+            if (evt.item)
+                evt.item.parentNode.removeChild(evt.item);
             configChange();
             updateViz(colors);
-        } else {
-            // TODO: open color swatch edit dialog
         }
     },
     onUpdate: function(evt) {
@@ -340,7 +338,7 @@ d3.select('#colorDots').on('click', function() {
 
 function addColor(jab) {
     if (colors.length >= 12) {
-        alert('Only 12 colors are supported (due to WebGL limitations)!')
+        alert('Only 12 colors are supported (due to WebGL limitations)!');
         return;
     }
 
@@ -357,7 +355,7 @@ function addColor(jab) {
         li.className = 'list-group-item list-group-item-action';
         li.innerHTML = '<span class="swatchListBlock" style="background:' +
             jab.rgb().toString() + '">&#x2588;&#x2588;&#x2588;&#x2588;</span>' + colorToHex(jab.rgb()) +
-            '<span class="swatchButtons"><span class="js-edit">&#x270e;</span> <span class="js-remove">&#x2716;</span></span>';
+            '<span class="swatchButtons"><span class="js-remove">&#x2716;</span></span>';
 
         li.dataset.color = jab;
         li.id = 'color' + colorToHex(c).slice(1);
@@ -370,42 +368,6 @@ function addColor(jab) {
     }
 }
 
-/*function render() {
-    var width = canvas.width,
-        height = canvas.height,
-        ctx = canvas.getContext('2d'),
-        image = ctx.createImageData(width, height),
-        i = 0;
-    
-    for (var y = 0; y < height; y++) {
-        for (var x = 0; x < width; x++) {
-            var jab = coordToJab([x, y]);
-            var c = jab.rgb();
-
-            var min_dist = minDist(jab);
-
-            if (min_dist < 20 || !c.displayable()) {
-                image.data[i++] = 240;
-                image.data[i++] = 240;
-                image.data[i++] = 240;
-            } else {
-                image.data[i++] = c.r;
-                image.data[i++] = c.g;
-                image.data[i++] = c.b;
-            }
-            image.data[i++] = 255;
-        }
-    }
-
-    ctx.putImageData(image, 0, 0);
-    
-    //for (var i = 0; i < colors.length; i++) {
-    //    ctx.beginPath();
-    //    ctx.fillStyle = colors[i].toString();
-    //    ctx.arc((colors[i].a + 50)/100 * width, height - ((colors[i].b + 50)/100 * height), 5, 0, 2 * Math.PI);
-    //    ctx.fill();
-    //}
-}*/
 function render(ignoreLightness) {
     webglRender(sliderVal, ignoreLightness);
 }
@@ -475,9 +437,9 @@ function updateOutput() {
     // Update output text area
     let output = '';
     if (!document.getElementById('settings').checkValidity())
-        output = 'Settings are invalid!'
+        output = 'Settings are invalid!';
     else if (too_close)
-        output = 'Colors are too close!'
+        output = 'Colors are too close!';
     else {
         for (let i = 0; i < colors.length; i++)
             output += colorToHex(colors[i].base[0].rgb()) + ', ';
@@ -494,7 +456,7 @@ function calcCVD(jab) {
         'protanomaly': Number(document.getElementById('protanomalyInput').value),
         'deuteranomaly': Number(document.getElementById('deuteranomalyInput').value),
         'tritanomaly': Number(document.getElementById('tritanomalyInput').value)
-    }
+    };
     Object.keys(cvd_config).forEach(function(key) {
         const cvd_c = d3.jab(cvd_forward(c, key, cvd_config[key]));
         color[key] = [cvd_c];
