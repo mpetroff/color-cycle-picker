@@ -42,12 +42,12 @@ function webglInit(canvas) {
     gl.vertexAttribPointer(program.texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 }
 
-function webglRender(J) {
+function webglRender(J, ignoreLightness) {
     // Set lightness
     let u = gl.getUniformLocation(program, 'u_J');
     gl.uniform1f(u, J);
     
-    if (minLightnessDist(J) > Number(document.getElementById('lightDistInput').value)) {
+    if (ignoreLightness || minLightnessDist(J) > Number(document.getElementById('lightDistInput').value)) {
         // Set existing colors
         let colorArrays = {};
         colorArrays.base = Array(12*3);
@@ -62,9 +62,11 @@ function webglRender(J) {
             let n = 0;
             for (let i = 0; i < colors.length; i++) {
                 for (let j = 0; j < colors[i][key].length; j++) {
-                    colorArrays[key][n++] = colors[i][key][j].J;
-                    colorArrays[key][n++] = colors[i][key][j].a;
-                    colorArrays[key][n++] = colors[i][key][j].b;
+                    if (!colors[i].ignore) {
+                        colorArrays[key][n++] = colors[i][key][j].J;
+                        colorArrays[key][n++] = colors[i][key][j].a;
+                        colorArrays[key][n++] = colors[i][key][j].b;
+                    }
                 }
             }
             u = gl.getUniformLocation(program, 'u_' + key + '_colors');

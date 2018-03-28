@@ -106,7 +106,8 @@ let vizLightnessGray = vizLightness.append("g")
 let vizLightnessColor = vizLightness.append("g")
     .attr("transform", "translate(0," + 40 + ")");
 
-function updateViz(cs) {
+function updateViz(cs, do_not_update_dots) {
+    do_not_update_dots = do_not_update_dots ? true : false;
     let c = [];
     for (let i = 0; i < cs.length; i++)
         c.push({color: cs[i].base[0], tooClose: cs[i].tooClose});
@@ -200,11 +201,17 @@ function updateViz(cs) {
     rects.exit().remove();
     rects.enter().append("rect")
         .attr("y", 0)
-        .attr("width", 2)
+        .attr("width", 4)
         .attr("height", 20)
+        .call(d3.drag()
+          .on('start', lineDragStarted)
+          .on('drag', lineDragged)
+          .on('end', lineDragEnded))
       .merge(rects)
-        .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 1)
-        .attr("fill", d => d3.jab(d.color.J, 0, 0).rgb().toString());
+        .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 2)
+        .attr("fill", d => d3.jab(d.color.J, 0, 0).rgb().toString())
+        .attr("id", (d, i) => 'grect' + i)
+        .attr("class", 'color-rect');
     swatches = vizLightnessColor;
     // Update contents
     rects = swatches.selectAll("rect")
@@ -212,16 +219,23 @@ function updateViz(cs) {
     rects.exit().remove();
     rects.enter().append("rect")
         .attr("y", 0)
-        .attr("width", 2)
+        .attr("width", 4)
         .attr("height", 20)
+        .call(d3.drag()
+          .on('start', lineDragStarted)
+          .on('drag', lineDragged)
+          .on('end', lineDragEnded))
       .merge(rects)
-        .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 1)
-        .attr("fill", d => d.color.rgb().toString());
+        .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 2)
+        .attr("fill", d => d.color.rgb().toString())
+        .attr("id", (d, i) => 'crect' + i)
+        .attr("class", 'color-rect');
 
     // Update output text area
     updateOutput();
     
     // Dots on gamut
+    if (!do_not_update_dots) {
     swatches = d3.select('#colorDots');
     if (colorDots.style.cursor == 'crosshair')
         c = c.slice(0, c.length - 1);
@@ -231,12 +245,92 @@ function updateViz(cs) {
     circles.exit().remove();
     circles.enter().append("circle")
         .attr("r", 5)
+        .call(d3.drag()
+          .on('start', dotDragStarted)
+          .on('drag', dotDragged)
+          .on('end', dotDragEnded))
       .merge(circles)
         .attr("cx", d => (d.color.a + 50) / 100 * canvas.width)
         .attr("cy", d => canvas.height - (d.color.b + 50) / 100 * canvas.height)
         .attr("fill", d => d.color.rgb().toString())
         .attr("stroke", d => d.tooClose ? "#800" : "none")
-        .attr("stroke-width", d => d.tooClose ? "3" : "0");
+        .attr("stroke-width", d => d.tooClose ? "3" : "0")
+        .attr("id", (d, i) => 'colordot' + i)
+        .attr("class", 'color-dot');
+    }
+}
+
+function dotDragStarted(d) {
+    d3.select(this).attr("stroke-width", "3");
+}
+
+function dotDragged(d) {
+    d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+    dragUpdate(d, this, this.id.slice(8), 'dot', true);
+}
+
+function dotDragEnded(d) {
+    dragUpdate(d, this, this.id.slice(8), 'dot', false);
+}
+
+function lineDragStarted(d) {
+    const idx = this.id.slice(5);
+    d3.select('#colordot' + idx).attr("stroke-width", "3");
+}
+
+function lineDragged(d) {
+    const idx = this.id.slice(5);
+    d3.select('#grect' + idx).attr("x", d.x = d3.event.x);
+    d3.select('#crect' + idx).attr("x", d.x = d3.event.x);
+    dragUpdate(d, this, this.id.slice(5), 'line', true);
+}
+
+function lineDragEnded(d) {
+    dragUpdate(d, this, this.id.slice(5), 'line', false);
+}
+
+function dragUpdate(d, _this, idx, type, ignoreColor) {
+    const elem = document.getElementById('color' + colorToHex(colors[idx].base[0].rgb()).slice(1));
+
+    // Update color list
+    let c = colors[idx];
+    if (type == 'dot') {
+        c.base[0].a = d.x / canvas.width * 100 - 50;
+        c.base[0].b = (canvas.height - d.y) / canvas.height * 100 - 50;
+    } else {
+        c.base[0].J = sliderScale.invert(d3.mouse(_this)[0] - sliderMargin.left + 2);
+    }
+    colors[idx] = calcCVD(c.base[0]);
+
+    // Update swatch list
+    elem.dataset.color = c.base[0];
+    elem.id = 'color' + colorToHex(c.base[0].rgb()).slice(1);
+    elem.childNodes[0].style.background = c.base[0].rgb().toString();
+
+    if (ignoreColor) {
+        // Update dot
+        d3.select('#colordot' + idx).attr("fill", c.base[0].rgb().toString());
+
+        configChange(true, true);
+
+        // Visualize colors that are too close
+        for (let i = 0; i < colors.length; i++) {
+            if (i == idx)
+                d3.select('#colordot' + idx).attr("stroke", colors[i].tooClose ? '#800' : "#fff");
+            else
+                d3.select('#colordot' + i)
+                  .attr("stroke", colors[i].tooClose ? "#800" : "none")
+                  .attr("stroke-width", colors[i].tooClose ? "3" : "0");
+        }
+
+        if (type == 'dot')
+            colors[idx].ignore = true;
+        webglRender(c.base[0].J, true);
+        if (type == 'dot')
+            colors[idx].ignore = false;
+    } else {
+        configChange(true, false);
+    }
 }
 
 d3.select('#colorDots').on('click', function() {
@@ -264,6 +358,7 @@ function addColor(jab) {
         li.innerHTML = '<span class="swatchListBlock" style="background:' +
             jab.rgb().toString() + '">&#x2588;&#x2588;&#x2588;&#x2588;</span>' + colorToHex(jab.rgb()) +
             '<span class="swatchButtons"><span class="js-edit">&#x270e;</span> <span class="js-remove">&#x2716;</span></span>';
+
         li.dataset.color = jab;
         li.id = 'color' + colorToHex(c).slice(1);
         swatchList.appendChild(li);
@@ -311,8 +406,8 @@ function addColor(jab) {
     //    ctx.fill();
     //}
 }*/
-function render() {
-    webglRender(sliderVal);
+function render(ignoreLightness) {
+    webglRender(sliderVal, ignoreLightness);
 }
 
 const sliderMargin = {right: 10, left: 10},
@@ -413,10 +508,14 @@ function calcCVD(jab) {
 }
 
 let too_close = false;
-function configChange() {
+function configChange(do_not_recalc_cvd, do_not_render) {
+    do_not_recalc_cvd = do_not_recalc_cvd ? true : false;
+    do_not_render = do_not_render ? true : false;
+
     // Recalculate CVD simulation
-    for (let i = 0; i < colors.length; i++)
-        colors[i] = calcCVD(colors[i].base[0]);
+    if (!do_not_recalc_cvd)
+        for (let i = 0; i < colors.length; i++)
+            colors[i] = calcCVD(colors[i].base[0]);
 
     // Check for colors that are too close
     const color_dist = Number(document.getElementById('colorDistInput').value);
@@ -446,15 +545,16 @@ function configChange() {
         }
 
         // TODO: remove these debug statements
-        if (min_color_dist < color_dist)
-            console.log('color ' + i + ' is too close in color: ' + min_color_dist);
-        if (min_light_dist < light_dist)
-            console.log('color ' + i + ' is too close in lightness: ' + min_light_dist);
+        //if (min_color_dist < color_dist)
+        //    console.log('color ' + i + ' is too close in color: ' + min_color_dist);
+        //if (min_light_dist < light_dist)
+        //    console.log('color ' + i + ' is too close in lightness: ' + min_light_dist);
     }
 
     updateOutput();
-    updateViz(colors);
-    render();
+    updateViz(colors, do_not_render);
+    if (!do_not_render)
+        render();
 }
 
 const colorInput = document.getElementById('colorInput');
