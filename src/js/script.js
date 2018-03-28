@@ -1,8 +1,113 @@
-let canvas = document.getElementById('canvas');
-let swatchList = document.getElementById('swatchlist');
-let colorDots = document.getElementById('colorDots');
-let sliderVal = 35;
+/*
+ * Color Cycle Picker
+ * Copyright (c) 2017-2018 Matthew Petroff
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
+// For gamut visualization
+const canvas = document.getElementById('canvas');
+let colorDots = document.getElementById('colorDots');
+
+// For swatch list
+let swatchList = document.getElementById('swatchlist');
+
+// Color cycle colors
+let colors = [];
+let too_close = false;
+
+// Create lightness slider input
+let sliderVal = 35;
+let vizLightness = d3.select("#vizLightness");
+let vizLightnessGray = vizLightness.append("g")
+    .attr("transform", "translate(0," + 20 + ")");
+let vizLightnessColor = vizLightness.append("g")
+    .attr("transform", "translate(0," + 40 + ")");
+const sliderMargin = {
+        right: 10,
+        left: 10
+    },
+    sliderWidth = +vizLightness.attr("width") - sliderMargin.left -
+        sliderMargin.right,
+    sliderHeight = 20;
+const sliderGradient = vizLightness.append("defs").append("linearGradient")
+    .attr("id", "grad")
+    .attr("x1", "0%")
+    .attr("x2", "100%")
+    .attr("y1", "0%")
+    .attr("y2", "0%")
+    .attr("gradientUnits", "userSpaceOnUse");
+sliderGradient.append("stop")
+    .attr("offset", "0%")
+    .attr("style", "stop-color: hsl(0, 0%, 35%);");
+sliderGradient.append("stop")
+    .attr("offset", "100%")
+    .attr("style", "stop-color: hsl(0, 0%, 95%);");
+const sliderScale = d3.scaleLinear()
+    .domain([35, 95])
+    .range([0, sliderWidth])
+    .clamp(true);
+let slider = vizLightness.append("g")
+    .attr("class", "slider")
+    .attr("transform", "translate(" + sliderMargin.left + "," +
+        sliderHeight / 2 + ")");
+slider.append("line")
+    .attr("class", "track-inset")
+    .attr("x1", sliderScale.range()[0])
+    .attr("x2", sliderScale.range()[1])
+    .attr("stroke", "url(#grad)")
+    .attr("stroke-width", 10);
+let trackOverlay = slider.append("line")
+    .attr("id", "sliderTrackOverlay")
+    .attr("x1", sliderScale.range()[0])
+    .attr("x2", sliderScale.range()[1])
+    .call(d3.drag()
+        .on("start.interrupt", function() {
+            slider.interrupt();
+        })
+        .on("start drag", function() {
+            adjustSlider(sliderScale.invert(d3.event.x));
+        }));
+
+// Set lightness slider to a given lightness
+function adjustSlider(val) {
+    sliderVal = val;
+    sliderHandle.attr("cx", sliderScale(val));
+    webglRender(val);
+}
+
+trackOverlay.on('mousemove', function() {
+    webglRender(sliderScale.invert(d3.mouse(this)[0]));
+});
+trackOverlay.on('mouseout', render);
+
+let sliderHandle = slider.insert("circle", "#sliderTrackOverlay")
+    .attr("id", "sliderHandle")
+    .attr("r", 8.75);
+
+d3.select('#colorDistInput').on('change', configChange);
+d3.select('#lightDistInput').on('change', configChange);
+d3.select('#deuteranomalyInput').on('change', configChange);
+d3.select('#protanomalyInput').on('change', configChange);
+d3.select('#tritanomalyInput').on('change', configChange);
+
+// For rearranging swatch list
 Sortable.create(swatchList, {
     filter: evt => evt.target.className == 'js-remove',
     onFilter: function(evt) {
@@ -32,8 +137,7 @@ Sortable.create(swatchList, {
     }
 });
 
-let colors = [];
-
+// Calculate minimum distance between a given color and existing colors
 function minDist(jab) {
     let cvd_colors = calcCVD(jab);
     let min_dist = 9999;
@@ -41,11 +145,13 @@ function minDist(jab) {
         for (let k = 0; k < cvd_colors[key].length; k++)
             for (let i = 0; i < colors.length; i++)
                 for (let j = 0; j < colors[i][key].length; j++)
-                    min_dist = Math.min(min_dist, cvd_colors[key][k].de(colors[i][key][j]));
+                    min_dist = Math.min(min_dist, cvd_colors[key][k].de(
+                        colors[i][key][j]));
     });
     return min_dist;
 }
 
+// Calculate minimum lightness distance between a given color and existing colors
 function minLightnessDist(J) {
     let min_dist = 9999;
     for (let i = 0; i < colors.length; i++)
@@ -53,44 +159,17 @@ function minLightnessDist(J) {
     return min_dist;
 }
 
+// Convert canvas coordinates into a color
 function coordToJab(coords) {
     const width = canvas.width,
         height = canvas.height,
         x = coords[0],
         y = coords[1];
-    return d3.jab(sliderVal, x / width * 100 - 50, (height - y) / height * 100 - 50);
+    return d3.jab(sliderVal, x / width * 100 - 50, (height - y) /
+        height * 100 - 50);
 }
 
-
-d3.select('#colorDots').on('mousemove', function() {
-    if (colors.length >= 12) {
-        colorDots.style.cursor = 'default';
-        return;
-    }
-
-    const jab = coordToJab(d3.mouse(this));
-    const c = jab.rgb();
-
-    const min_light_dist = minLightnessDist(jab.J);
-    const min_dist = minDist(jab);
-
-    let cs = colors.slice();
-    if (min_dist < Number(document.getElementById('colorDistInput').value) ||
-        min_light_dist < Number(document.getElementById('lightDistInput').value) ||
-        !c.displayable()) {
-        colorDots.style.cursor = 'default';
-    } else {
-        colorDots.style.cursor = 'crosshair';
-        cs.push({
-            base: [jab],
-            tooClose: false
-        });
-    }
-    updateViz(cs);
-
-
-});
-
+// Convert D3 color to hex code
 function colorToHex(c) {
     let r = Math.round(c.r).toString(16),
         g = Math.round(c.g).toString(16),
@@ -101,12 +180,7 @@ function colorToHex(c) {
     return '#' + r + g + b;
 }
 
-let vizLightness = d3.select("#vizLightness");
-let vizLightnessGray = vizLightness.append("g")
-    .attr("transform", "translate(0," + 20 + ")");
-let vizLightnessColor = vizLightness.append("g")
-    .attr("transform", "translate(0," + 40 + ")");
-
+// Update visualization
 function updateViz(cs, do_not_update_dots) {
     do_not_update_dots = do_not_update_dots ? true : false;
     let c = [];
@@ -255,7 +329,8 @@ function updateViz(cs, do_not_update_dots) {
                 .on('end', dotDragEnded))
           .merge(circles)
             .attr("cx", d => (d.color.a + 50) / 100 * canvas.width)
-            .attr("cy", d => canvas.height - (d.color.b + 50) / 100 * canvas.height)
+            .attr("cy", d => canvas.height - (d.color.b + 50) / 100 *
+                canvas.height)
             .attr("fill", d => d.color.rgb().toString())
             .attr("stroke", d => d.tooClose ? "#800" : "none")
             .attr("stroke-width", d => d.tooClose ? "3" : "0")
@@ -264,37 +339,37 @@ function updateViz(cs, do_not_update_dots) {
     }
 }
 
+// Event handlers for dragging color dots on gamut visualization
 function dotDragStarted(d) {
     d3.select(this).attr("stroke-width", "3");
 }
-
 function dotDragged(d) {
     d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
     dragUpdate(d, this, this.id.slice(8), 'dot', true);
 }
-
 function dotDragEnded(d) {
     dragUpdate(d, this, this.id.slice(8), 'dot', false);
 }
 
+// Event handlers for dragging color line below gamut visualization
 function lineDragStarted(d) {
     const idx = this.id.slice(5);
     d3.select('#colordot' + idx).attr("stroke-width", "3");
 }
-
 function lineDragged(d) {
     const idx = this.id.slice(5);
     d3.select('#grect' + idx).attr("x", d.x = d3.event.x);
     d3.select('#crect' + idx).attr("x", d.x = d3.event.x);
     dragUpdate(d, this, this.id.slice(5), 'line', true);
 }
-
 function lineDragEnded(d) {
     dragUpdate(d, this, this.id.slice(5), 'line', false);
 }
 
+// Main drag update function
 function dragUpdate(d, _this, idx, type, ignoreColor) {
-    const elem = document.getElementById('color' + colorToHex(colors[idx].base[0].rgb()).slice(1));
+    const elem = document.getElementById('color' +
+        colorToHex(colors[idx].base[0].rgb()).slice(1));
 
     // Update color list
     let c = colors[idx];
@@ -302,7 +377,8 @@ function dragUpdate(d, _this, idx, type, ignoreColor) {
         c.base[0].a = d.x / canvas.width * 100 - 50;
         c.base[0].b = (canvas.height - d.y) / canvas.height * 100 - 50;
     } else {
-        c.base[0].J = sliderScale.invert(d3.mouse(_this)[0] - sliderMargin.left + 2);
+        c.base[0].J = sliderScale.invert(d3.mouse(_this)[0] -
+            sliderMargin.left + 2);
     }
     colors[idx] = calcCVD(c.base[0]);
 
@@ -320,7 +396,8 @@ function dragUpdate(d, _this, idx, type, ignoreColor) {
         // Visualize colors that are too close
         for (let i = 0; i < colors.length; i++) {
             if (i == idx)
-                d3.select('#colordot' + idx).attr("stroke", colors[i].tooClose ? '#800' : "#fff");
+                d3.select('#colordot' + idx).attr("stroke",
+                    colors[i].tooClose ? '#800' : "#fff");
             else
                 d3.select('#colordot' + i)
                   .attr("stroke", colors[i].tooClose ? "#800" : "none")
@@ -337,11 +414,41 @@ function dragUpdate(d, _this, idx, type, ignoreColor) {
     }
 }
 
+// Add color when clicking on gamut visualization
 d3.select('#colorDots').on('click', function() {
     const jab = coordToJab(d3.mouse(this));
     addColor(jab);
 });
 
+// Show color preview while mousing over canvas
+d3.select('#colorDots').on('mousemove', function() {
+    if (colors.length >= 12) {
+        colorDots.style.cursor = 'default';
+        return;
+    }
+
+    const jab = coordToJab(d3.mouse(this));
+    const c = jab.rgb();
+
+    const min_light_dist = minLightnessDist(jab.J);
+    const min_dist = minDist(jab);
+
+    let cs = colors.slice();
+    if (min_dist < Number(document.getElementById('colorDistInput').value) ||
+        min_light_dist < Number(document.getElementById('lightDistInput').value) ||
+        !c.displayable()) {
+        colorDots.style.cursor = 'default';
+    } else {
+        colorDots.style.cursor = 'crosshair';
+        cs.push({
+            base: [jab],
+            tooClose: false
+        });
+    }
+    updateViz(cs);
+});
+
+// Add a given color to swatch list
 function addColor(jab) {
     if (colors.length >= 12) {
         alert('Only 12 colors are supported (due to WebGL limitations)!');
@@ -351,7 +458,8 @@ function addColor(jab) {
     const c = jab.rgb();
 
     if (minDist(jab) > Number(document.getElementById('colorDistInput').value) &&
-        minLightnessDist(jab.J) > Number(document.getElementById('lightDistInput').value) &&
+        minLightnessDist(jab.J) >
+        Number(document.getElementById('lightDistInput').value) &&
         c.displayable()) {
         let cs = calcCVD(jab);
         cs.tooClose = false;
@@ -360,7 +468,8 @@ function addColor(jab) {
         let li = document.createElement('li');
         li.className = 'list-group-item list-group-item-action';
         li.innerHTML = '<span class="swatchListBlock" style="background:' +
-            jab.rgb().toString() + '">&#x2588;&#x2588;&#x2588;&#x2588;</span>' + colorToHex(jab.rgb()) +
+            jab.rgb().toString() + '">&#x2588;&#x2588;&#x2588;&#x2588;</span>' +
+            colorToHex(jab.rgb()) +
             '<span class="swatchButtons"><span class="js-remove">&#x2716;</span></span>';
 
         li.dataset.color = jab;
@@ -374,78 +483,12 @@ function addColor(jab) {
     }
 }
 
+// Render gamut visualization
 function render(ignoreLightness) {
     webglRender(sliderVal, ignoreLightness);
 }
 
-const sliderMargin = {
-        right: 10,
-        left: 10
-    },
-    sliderWidth = +vizLightness.attr("width") - sliderMargin.left - sliderMargin.right,
-    sliderHeight = 20;
-
-const sliderGradient = vizLightness.append("defs").append("linearGradient")
-    .attr("id", "grad")
-    .attr("x1", "0%")
-    .attr("x2", "100%")
-    .attr("y1", "0%")
-    .attr("y2", "0%")
-    .attr("gradientUnits", "userSpaceOnUse");
-sliderGradient.append("stop")
-    .attr("offset", "0%")
-    .attr("style", "stop-color: hsl(0, 0%, 35%);");
-sliderGradient.append("stop")
-    .attr("offset", "100%")
-    .attr("style", "stop-color: hsl(0, 0%, 95%);");
-
-const sliderScale = d3.scaleLinear()
-    .domain([35, 95])
-    .range([0, sliderWidth])
-    .clamp(true);
-
-let slider = vizLightness.append("g")
-    .attr("class", "slider")
-    .attr("transform", "translate(" + sliderMargin.left + "," + sliderHeight / 2 + ")");
-slider.append("line")
-    .attr("class", "track-inset")
-    .attr("x1", sliderScale.range()[0])
-    .attr("x2", sliderScale.range()[1])
-    .attr("stroke", "url(#grad)")
-    .attr("stroke-width", 10);
-let trackOverlay = slider.append("line")
-    .attr("id", "sliderTrackOverlay")
-    .attr("x1", sliderScale.range()[0])
-    .attr("x2", sliderScale.range()[1])
-    .call(d3.drag()
-        .on("start.interrupt", function() {
-            slider.interrupt();
-        })
-        .on("start drag", function() {
-            adjustSlider(sliderScale.invert(d3.event.x));
-        }));
-
-function adjustSlider(val) {
-    sliderVal = val;
-    sliderHandle.attr("cx", sliderScale(val));
-    webglRender(val);
-}
-
-trackOverlay.on('mousemove', function() {
-    webglRender(sliderScale.invert(d3.mouse(this)[0]));
-});
-trackOverlay.on('mouseout', render);
-
-let sliderHandle = slider.insert("circle", "#sliderTrackOverlay")
-    .attr("id", "sliderHandle")
-    .attr("r", 8.75);
-
-d3.select('#colorDistInput').on('change', configChange);
-d3.select('#lightDistInput').on('change', configChange);
-d3.select('#deuteranomalyInput').on('change', configChange);
-d3.select('#protanomalyInput').on('change', configChange);
-d3.select('#tritanomalyInput').on('change', configChange);
-
+// Update text output
 function updateOutput() {
     // Update output text area
     let output = '';
@@ -462,6 +505,7 @@ function updateOutput() {
     document.getElementById('output').value = output;
 }
 
+// Calculate color vision deficiency simulation colors for a given color
 function calcCVD(jab) {
     let color = {
         'base': [jab]
@@ -479,13 +523,13 @@ function calcCVD(jab) {
         //const cvd_num = Math.round(cvd_dist / 2);
         const cvd_num = 4; // Dynamic is better but isn't possible in shader
         for (let i = 1; i <= cvd_num; i++)
-            color[key].push(d3.jab(cvd_forward(c, key, i * cvd_config[key] / cvd_num)));
+            color[key].push(d3.jab(cvd_forward(c, key, i *
+                cvd_config[key] / cvd_num)));
     });
     return color;
 }
 
-let too_close = false;
-
+// Recalculate CVD simulation and distances when configuration changes
 function configChange(do_not_recalc_cvd, do_not_render) {
     do_not_recalc_cvd = do_not_recalc_cvd ? true : false;
     do_not_render = do_not_render ? true : false;
@@ -507,12 +551,15 @@ function configChange(do_not_recalc_cvd, do_not_render) {
             if (i != j) {
                 Object.keys(cvd_colors).forEach(function(key) {
                     for (let k = 0; k < colors[j][key].length; k++)
-                        min_color_dist = Math.min(min_color_dist, cvd_colors[key][k].de(colors[j][key][k]));
+                        min_color_dist = Math.min(min_color_dist,
+                            cvd_colors[key][k].de(colors[j][key][k]));
                 });
-                min_light_dist = Math.min(min_light_dist, Math.abs(colors[i].base[0].J - colors[j].base[0].J));
+                min_light_dist = Math.min(min_light_dist,
+                    Math.abs(colors[i].base[0].J - colors[j].base[0].J));
             }
         }
-        const elem = document.getElementById('color' + colorToHex(colors[i].base[0].rgb()).slice(1));
+        const elem = document.getElementById('color' +
+            colorToHex(colors[i].base[0].rgb()).slice(1));
         if (min_color_dist < color_dist || min_light_dist < light_dist) {
             too_close = true;
             elem.classList.add('list-group-item-danger');
@@ -521,12 +568,6 @@ function configChange(do_not_recalc_cvd, do_not_render) {
             elem.classList.remove('list-group-item-danger');
             colors[i].tooClose = false;
         }
-
-        // TODO: remove these debug statements
-        //if (min_color_dist < color_dist)
-        //    console.log('color ' + i + ' is too close in color: ' + min_color_dist);
-        //if (min_light_dist < light_dist)
-        //    console.log('color ' + i + ' is too close in lightness: ' + min_light_dist);
     }
 
     updateOutput();
@@ -535,6 +576,7 @@ function configChange(do_not_recalc_cvd, do_not_render) {
         render();
 }
 
+// Add color using text specifier input
 const colorInput = document.getElementById('colorInput');
 document.getElementById('colorAdd').addEventListener('click', function() {
     const c = d3.color(colorInput.value);
@@ -551,5 +593,6 @@ document.getElementById('colorAdd').addEventListener('click', function() {
     }
 });
 
+// Initialize visualization
 webglInit(canvas);
-adjustSlider(60); // Sets inital lightness and renders visualization
+adjustSlider(60); // Sets initial lightness and renders visualization

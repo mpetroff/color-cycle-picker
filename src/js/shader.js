@@ -1,3 +1,27 @@
+/*
+ * Color Cycle Picker
+ * Copyright (c) 2017-2018 Matthew Petroff
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+// Initialize WebGL canvas
 function webglInit(canvas) {
     gl = canvas.getContext('experimental-webgl', {
         alpha: true,
@@ -41,16 +65,19 @@ function webglInit(canvas) {
     // Provide texture coordinates for rectangle
     const texCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1]), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(
+        [-1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1, -1]), gl.STATIC_DRAW);
     gl.vertexAttribPointer(program.texCoordLocation, 2, gl.FLOAT, false, 0, 0);
 }
 
+// Render gamut visualization
 function webglRender(J, ignoreLightness) {
     // Set lightness
     let u = gl.getUniformLocation(program, 'u_J');
     gl.uniform1f(u, J);
 
-    if (ignoreLightness || minLightnessDist(J) > Number(document.getElementById('lightDistInput').value)) {
+    if (ignoreLightness || minLightnessDist(J) >
+        Number(document.getElementById('lightDistInput').value)) {
         // Set existing colors
         let colorArrays = {};
         colorArrays.base = Array(12 * 3);
@@ -103,8 +130,38 @@ function webglRender(J, ignoreLightness) {
 
 
 /*
- * Below is heavily based on or copied verbatim from d3-cam02:
+ * Below is heavily based on d3-cam02 (but ported to GLSL):
  * https://github.com/connorgr/d3-cam02
+ *
+ * d3-cam02 license (BSD 3-Clause):
+ *
+ * Copyright 2016 Connor Gramazio
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ *
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ *
+ * * Neither the name of the author nor the names of contributors may be used to
+ *   endorse or promote products derived from this software without specific prior
+ *   written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 // Vertex shader
@@ -206,7 +263,8 @@ vec3 hpe2xyz(vec3 lms) {
 }
 
 vec3 inverseNonlinearAdaptation(vec3 coneResponse) {
-    vec3 p = (27.13 * abs(coneResponse - 0.1)) / (400.0 - abs(coneResponse - 0.1));
+    vec3 p = (27.13 * abs(coneResponse - 0.1))
+        / (400.0 - abs(coneResponse - 0.1));
     p[0] = pow(p[0], 1.0 / 0.42);
     p[1] = pow(p[1], 1.0 / 0.42);
     p[2] = pow(p[2], 1.0 / 0.42);
@@ -260,8 +318,8 @@ vec3 cam022rgb(float J, float C, float h) {
     vec3 txyz = hpe2xyz(p);
     vec3 lms_c = xyz2cat02(txyz);
 
-    vec3 lms = lms_c / ( ((CIECAM02_VC_D65_Y * CIECAM02_VC_d) / CIECAM02_VC_D65_LMS)
-        + (1.0 - CIECAM02_VC_d) );
+    vec3 lms = lms_c / (((CIECAM02_VC_D65_Y * CIECAM02_VC_d)
+        / CIECAM02_VC_D65_LMS) + (1.0 - CIECAM02_VC_d));
 
     vec3 xyz = cat022xyz(lms);
     vec3 rgb = xyz2rgb(xyz);
@@ -281,7 +339,8 @@ vec3 nonlinearAdaptation(vec3 coneResponse) {
 const float pow_n = pow(1.64 - pow(0.29, CIECAM02_VC_n), 0.73),
             pow_fl = pow(CIECAM02_VC_fl, 0.25);
 vec3 cat022cam02(vec3 lms) {
-    vec3 c = lms * (((CIECAM02_VC_D65_Y * CIECAM02_VC_d) / CIECAM02_VC_D65_LMS) + (1.0 - CIECAM02_VC_d));
+    vec3 c = lms * (((CIECAM02_VC_D65_Y * CIECAM02_VC_d) / CIECAM02_VC_D65_LMS)
+        + (1.0 - CIECAM02_VC_d));
 
     vec3 hpeTransforms = cat022hpe(c);
 
@@ -319,8 +378,8 @@ vec3 cat022cam02(vec3 lms) {
         CIECAM02_VC_c * CIECAM02_VC_z);
 
     float et = 0.25 * (cos((h * PI) / 180.0 + 2.0) + 3.8);
-    float t = ((50000.0 / 13.0) * CIECAM02_VC_nc * CIECAM02_VC_ncb * et * sqrt(ca*ca + cb*cb)) /
-        (pa[0] + pa[1] + (21.0/20.0)*pa[2]);
+    float t = ((50000.0 / 13.0) * CIECAM02_VC_nc * CIECAM02_VC_ncb * et
+        * sqrt(ca*ca + cb*cb)) / (pa[0] + pa[1] + (21.0/20.0)*pa[2]);
 
     float C = pow(t, 0.9) * sqrt(J / 100.0) * pow_n;
 
@@ -365,10 +424,12 @@ vec3 linearRgbToJab(vec3 rgb) {
     vec3 lmsConeResponses = xyz2cat02(xyz);
     vec3 cam02 = cat022cam02(lmsConeResponses);
 
-    float JPrime = ((1.0 + 100.0*altCam02Coef_ucs[1]) * cam02[0]) / (1.0 + altCam02Coef_ucs[1] * cam02[0]);
+    float JPrime = ((1.0 + 100.0*altCam02Coef_ucs[1]) * cam02[0])
+        / (1.0 + altCam02Coef_ucs[1] * cam02[0]);
     JPrime /= altCam02Coef_ucs[0];
 
-    float MPrime = (1.0/altCam02Coef_ucs[2]) * log(1.0 + altCam02Coef_ucs[2]*cam02[1]);
+    float MPrime = (1.0/altCam02Coef_ucs[2])
+        * log(1.0 + altCam02Coef_ucs[2]*cam02[1]);
 
     float a = MPrime * cos(PI / 180.0 * cam02[2]);
     float b = MPrime * sin(PI / 180.0 * cam02[2]);
@@ -383,43 +444,60 @@ float cam02de(vec3 c1, vec3 c2) {
     return sqrt(diff[0] + diff[1] + diff[2]);
 }
 
+/*
+ * End portion based on d3-cam02
+ */
+
 // Existing colors
 uniform vec3 u_base_colors[12];
 uniform vec3 u_protanomaly_colors[60];
 uniform vec3 u_deuteranomaly_colors[60];
 uniform vec3 u_tritanomaly_colors[60];
 
+// Calculate minimum color distances
 float minDist(vec3 jab) {
     float min_dist = 9999.;
     for (int i = 0; i < 15; i++)
-        if (u_base_colors[i][0] >= -999. && u_base_colors[i][1] >= -999. && u_base_colors[i][2] >= -999.)
+        if (u_base_colors[i][0] >= -999.0 && u_base_colors[i][1] >= -999.0
+            && u_base_colors[i][2] >= -999.0)
             min_dist = min(min_dist, cam02de(jab, u_base_colors[i]));
     return min_dist;
 }
 float minDistProtanomaly(vec3 jab) {
     float min_dist = 9999.;
     for (int i = 0; i < 75; i++)
-        if (u_protanomaly_colors[i][0] >= -999. && u_protanomaly_colors[i][1] >= -999. && u_protanomaly_colors[i][2] >= -999.)
+        if (u_protanomaly_colors[i][0] >= -999.0
+            && u_protanomaly_colors[i][1] >= -999.0
+            && u_protanomaly_colors[i][2] >= -999.0)
             min_dist = min(min_dist, cam02de(jab, u_protanomaly_colors[i]));
     return min_dist;
 }
 float minDistDeuteranomaly(vec3 jab) {
     float min_dist = 9999.;
     for (int i = 0; i < 75; i++)
-        if (u_deuteranomaly_colors[i][0] >= -999. && u_deuteranomaly_colors[i][1] >= -999. && u_deuteranomaly_colors[i][2] >= -999.)
+        if (u_deuteranomaly_colors[i][0] >= -999.0
+            && u_deuteranomaly_colors[i][1] >= -999.0
+            && u_deuteranomaly_colors[i][2] >= -999.0)
             min_dist = min(min_dist, cam02de(jab, u_deuteranomaly_colors[i]));
     return min_dist;
 }
 float minDistTritanomaly(vec3 jab) {
     float min_dist = 9999.;
     for (int i = 0; i < 75; i++)
-        if (u_tritanomaly_colors[i][0] >= -999. && u_tritanomaly_colors[i][1] >= -999. && u_tritanomaly_colors[i][2] >= -999.)
+        if (u_tritanomaly_colors[i][0] >= -999.0
+            && u_tritanomaly_colors[i][1] >= -999.0
+            && u_tritanomaly_colors[i][2] >= -999.0)
             min_dist = min(min_dist, cam02de(jab, u_tritanomaly_colors[i]));
     return min_dist;
 }
 
 
-
+// CVD simulation matricies. From:
+// G. M. Machado, M. M. Oliveira and L. A. F. Fernandes,
+// "A Physiologically-based Model for Simulation of Color Vision Deficiency,"
+// in IEEE Transactions on Visualization and Computer Graphics, vol. 15, no. 6,
+// pp. 1291-1298, Nov.-Dec. 2009. doi: 10.1109/TVCG.2009.113
+// https://www.inf.ufrgs.br/~oliveira/pubs_files/CVD_Simulation/CVD_Simulation.html
 const mat3 MACHADO_ET_AL_protanomaly_0 = mat3(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0);
 const mat3 MACHADO_ET_AL_protanomaly_10 = mat3(0.856167,0.029342,-0.00288,0.182038,0.955115,-0.001563,-0.038205,0.015544,1.004443);
 const mat3 MACHADO_ET_AL_protanomaly_20 = mat3(0.734766,0.05184,-0.004928,0.334872,0.919198,-0.004209,-0.069637,0.028963,1.009137);
@@ -431,7 +509,6 @@ const mat3 MACHADO_ET_AL_protanomaly_70 = mat3(0.319627,0.106241,-0.007025,0.849
 const mat3 MACHADO_ET_AL_protanomaly_80 = mat3(0.259411,0.110296,-0.006276,0.923008,0.80434,-0.034346,-0.18242,0.085364,1.040622);
 const mat3 MACHADO_ET_AL_protanomaly_90 = mat3(0.203876,0.112975,-0.005222,0.990338,0.794542,-0.041043,-0.194214,0.092483,1.046265);
 const mat3 MACHADO_ET_AL_protanomaly_100 = mat3(0.152286,0.114503,-0.003882,1.052583,0.786281,-0.048116,-0.204868,0.099216,1.051998);
-
 const mat3 MACHADO_ET_AL_deuteranomaly_0 = mat3(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0);
 const mat3 MACHADO_ET_AL_deuteranomaly_10 = mat3(0.866435,0.049567,-0.003453,0.177704,0.939063,0.007233,-0.044139,0.01137,0.99622);
 const mat3 MACHADO_ET_AL_deuteranomaly_20 = mat3(0.760729,0.090568,-0.006027,0.319078,0.889315,0.013325,-0.079807,0.020117,0.992702);
@@ -443,7 +520,6 @@ const mat3 MACHADO_ET_AL_deuteranomaly_70 = mat3(0.457771,0.226409,-0.011595,0.7
 const mat3 MACHADO_ET_AL_deuteranomaly_80 = mat3(0.422823,0.245752,-0.011843,0.781057,0.709602,0.037423,-0.203881,0.044646,0.974421);
 const mat3 MACHADO_ET_AL_deuteranomaly_90 = mat3(0.392952,0.263559,-0.01191,0.82361,0.69021,0.040281,-0.216562,0.046232,0.97163);
 const mat3 MACHADO_ET_AL_deuteranomaly_100 = mat3(0.367322,0.280085,-0.01182,0.860646,0.672501,0.04294,-0.227968,0.047413,0.968881);
-
 const mat3 MACHADO_ET_AL_tritanomaly_0 = mat3(1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0);
 const mat3 MACHADO_ET_AL_tritanomaly_10 = mat3(0.92667,0.021191,0.008437,0.092514,0.964503,0.054813,-0.019184,0.014306,0.93675);
 const mat3 MACHADO_ET_AL_tritanomaly_20 = mat3(0.89572,0.029997,0.013027,0.13333,0.9454,0.104707,-0.02905,0.024603,0.882266);
@@ -456,6 +532,7 @@ const mat3 MACHADO_ET_AL_tritanomaly_80 = mat3(1.257728,-0.078003,-0.003316,-0.1
 const mat3 MACHADO_ET_AL_tritanomaly_90 = mat3(1.278864,-0.084748,-0.000989,-0.125333,0.957674,0.601151,-0.153531,0.127074,0.399838);
 const mat3 MACHADO_ET_AL_tritanomaly_100 = mat3(1.255528,-0.078411,0.004733,-0.076749,0.930809,0.691367,-0.178779,0.147602,0.3039);
 
+// Calculate CVD simulation matricies for a given CVD type and severity
 mat3 machado_et_al_2009_matrix_protanomaly(float severity) {
     float fraction = mod(severity, 10.0);
     float low = severity - fraction;
@@ -637,6 +714,7 @@ mat3 machado_et_al_2009_matrix_tritanomaly(float severity) {
     return (1.0 - fraction / 10.0) * low_matrix + fraction / 10.0 * high_matrix;
 }
 
+// Calculate CVD simulation for a color for a given CVD type and severity
 vec3 cvd_forward_protanomaly(vec3 rgb_linear, float severity) {
     mat3 mat = machado_et_al_2009_matrix_protanomaly(severity);
     return mat * rgb_linear;
@@ -655,27 +733,25 @@ uniform float u_protanomaly_severity;
 uniform float u_deuteranomaly_severity;
 uniform float u_tritanomaly_severity;
 
+// Calculate minimum color distance using CVD simulation
 float cvdMinDist(vec3 rgb) {
     float min_dist = 9999.;
-    float cvd_dist;
-    int cvd_num = 5;
-
     vec3 rgb_linear = rgbLinear(rgb);
 
-    //cvd_dist = minDist(cvd_forward_protanomaly(jab, u_protanomaly_severity));
-    //cvd_num = int(cvd_dist / 2.0);
     for (int i = 0; i <= 5; i++)
-        min_dist = min(min_dist, minDistProtanomaly(linearRgbToJab(cvd_forward_protanomaly(rgb_linear, float(i) * u_protanomaly_severity / float(cvd_num)))));
+        min_dist = min(min_dist, minDistProtanomaly(linearRgbToJab(
+            cvd_forward_protanomaly(rgb_linear, float(i)
+             * u_protanomaly_severity / 5.0))));
 
-    //cvd_dist = minDist(cvd_forward_deuteranomaly(jab, u_deuteranomaly_severity));
-    //cvd_num = int(cvd_dist / 2.0);
     for (int i = 0; i <= 5; i++)
-        min_dist = min(min_dist, minDistDeuteranomaly(linearRgbToJab(cvd_forward_deuteranomaly(rgb_linear, float(i) * u_deuteranomaly_severity / float(cvd_num)))));
+        min_dist = min(min_dist, minDistDeuteranomaly(linearRgbToJab(
+            cvd_forward_deuteranomaly(rgb_linear, float(i)
+            * u_deuteranomaly_severity / 5.0))));
 
-    //cvd_dist = minDist(cvd_forward_tritanomaly(jab, u_tritanomaly_severity));
-    //cvd_num = int(cvd_dist / 2.0);
     for (int i = 0; i <= 5; i++)
-        min_dist = min(min_dist, minDistTritanomaly(linearRgbToJab(cvd_forward_tritanomaly(rgb_linear, float(i) * u_tritanomaly_severity / float(cvd_num)))));
+        min_dist = min(min_dist, minDistTritanomaly(linearRgbToJab(
+            cvd_forward_tritanomaly(rgb_linear, float(i)
+            * u_tritanomaly_severity / 5.0))));
 
     return min_dist;
 }
@@ -694,14 +770,13 @@ uniform float u_J;
 uniform int u_render;
 
 void main() {
-    vec3 jab = vec3(u_J, v_texCoord.x * 50., v_texCoord.y * 50.);
+    vec3 jab = vec3(u_J, v_texCoord.x * 50.0, v_texCoord.y * 50.0);
     vec3 rgb = jabToRgb(jab);
-    if (u_render < 1 || rgb[0] < 0. || rgb[0] > 1. || rgb[1] < 0. || rgb[1] > 1. || rgb[2] < 0. || rgb[2] > 1.
-        || min(cvdMinDist(rgb), minDist(jab)) < u_minColorDist) {
+    if (u_render < 1 || rgb[0] < 0.0 || rgb[0] > 1. || rgb[1] < 0.0
+        || rgb[1] > 1.0 || rgb[2] < 0.0 || rgb[2] > 1.0
+        || min(cvdMinDist(rgb), minDist(jab)) < u_minColorDist)
         rgb = vec3(0.94, 0.94, 0.94);
-        //rgb = jabToRgb(rgbToJab(vec3(0.94, 0.94, 0.94)));
-    }
     
-    gl_FragColor = vec4(rgb[0], rgb[1], rgb[2], 1.);
+    gl_FragColor = vec4(rgb[0], rgb[1], rgb[2], 1.0);
 }
 `;
