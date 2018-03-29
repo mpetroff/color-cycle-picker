@@ -21,6 +21,8 @@
  * THE SOFTWARE.
  */
 
+'use strict';
+
 // For gamut visualization
 const canvas = document.getElementById('canvas');
 let colorDots = document.getElementById('colorDots');
@@ -35,61 +37,61 @@ let colors = [],
 
 // Create lightness slider input
 let sliderVal = 35;
-let vizLightness = d3.select("#vizLightness");
-let vizLightnessGray = vizLightness.append("g")
-    .attr("transform", "translate(0," + 20 + ")");
-let vizLightnessColor = vizLightness.append("g")
-    .attr("transform", "translate(0," + 40 + ")");
+let vizLightness = d3.select('#vizLightness');
+let vizLightnessGray = vizLightness.append('g')
+    .attr('transform', 'translate(0,' + 20 + ')');
+let vizLightnessColor = vizLightness.append('g')
+    .attr('transform', 'translate(0,' + 40 + ')');
 const sliderMargin = {
         right: 10,
         left: 10
     },
-    sliderWidth = +vizLightness.attr("width") - sliderMargin.left -
+    sliderWidth = +vizLightness.attr('width') - sliderMargin.left -
         sliderMargin.right,
     sliderHeight = 20;
-const sliderGradient = vizLightness.append("defs").append("linearGradient")
-    .attr("id", "grad")
-    .attr("x1", "0%")
-    .attr("x2", "100%")
-    .attr("y1", "0%")
-    .attr("y2", "0%")
-    .attr("gradientUnits", "userSpaceOnUse");
-sliderGradient.append("stop")
-    .attr("offset", "0%")
-    .attr("style", "stop-color: hsl(0, 0%, 35%);");
-sliderGradient.append("stop")
-    .attr("offset", "100%")
-    .attr("style", "stop-color: hsl(0, 0%, 95%);");
+const sliderGradient = vizLightness.append('defs').append('linearGradient')
+    .attr('id', 'grad')
+    .attr('x1', '0%')
+    .attr('x2', '100%')
+    .attr('y1', '0%')
+    .attr('y2', '0%')
+    .attr('gradientUnits', 'userSpaceOnUse');
+sliderGradient.append('stop')
+    .attr('offset', '0%')
+    .attr('style', 'stop-color: hsl(0, 0%, 35%);');
+sliderGradient.append('stop')
+    .attr('offset', '100%')
+    .attr('style', 'stop-color: hsl(0, 0%, 95%);');
 const sliderScale = d3.scaleLinear()
     .domain([35, 95])
     .range([0, sliderWidth])
     .clamp(true);
-let slider = vizLightness.append("g")
-    .attr("class", "slider")
-    .attr("transform", "translate(" + sliderMargin.left + "," +
-        sliderHeight / 2 + ")");
-slider.append("line")
-    .attr("class", "track-inset")
-    .attr("x1", sliderScale.range()[0])
-    .attr("x2", sliderScale.range()[1])
-    .attr("stroke", "url(#grad)")
-    .attr("stroke-width", 10);
-let trackOverlay = slider.append("line")
-    .attr("id", "sliderTrackOverlay")
-    .attr("x1", sliderScale.range()[0])
-    .attr("x2", sliderScale.range()[1])
+let slider = vizLightness.append('g')
+    .attr('class', 'slider')
+    .attr('transform', 'translate(' + sliderMargin.left + ',' +
+        sliderHeight / 2 + ')');
+slider.append('line')
+    .attr('class', 'track-inset')
+    .attr('x1', sliderScale.range()[0])
+    .attr('x2', sliderScale.range()[1])
+    .attr('stroke', 'url(#grad)')
+    .attr('stroke-width', 10);
+let trackOverlay = slider.append('line')
+    .attr('id', 'sliderTrackOverlay')
+    .attr('x1', sliderScale.range()[0])
+    .attr('x2', sliderScale.range()[1])
     .call(d3.drag()
-        .on("start.interrupt", function() {
+        .on('start.interrupt', function() {
             slider.interrupt();
         })
-        .on("start drag", function() {
+        .on('start drag', function() {
             adjustSlider(sliderScale.invert(d3.event.x));
         }));
 
 // Set lightness slider to a given lightness
 function adjustSlider(val) {
     sliderVal = val;
-    sliderHandle.attr("cx", sliderScale(val));
+    sliderHandle.attr('cx', sliderScale(val));
     webglRender(val);
 }
 
@@ -98,9 +100,9 @@ trackOverlay.on('mousemove', function() {
 });
 trackOverlay.on('mouseout', render);
 
-let sliderHandle = slider.insert("circle", "#sliderTrackOverlay")
-    .attr("id", "sliderHandle")
-    .attr("r", 8.75);
+let sliderHandle = slider.insert('circle', '#sliderTrackOverlay')
+    .attr('id', 'sliderHandle')
+    .attr('r', 8.75);
 
 d3.select('#colorDistInput').on('change', configChange);
 d3.select('#lightDistInput').on('change', configChange);
@@ -197,94 +199,94 @@ function updateViz(cs, do_not_update_dots) {
     // Large swatches
     let swatches = d3.select('#vizLargeSwatches');
     // Resize to fit
-    swatches.style("height", c.length * 50 + 'px');
+    swatches.style('height', c.length * 50 + 'px');
     // Update contents
-    let rects = swatches.selectAll("rect")
+    let rects = swatches.selectAll('rect')
         .data(c);
     rects.exit().remove();
-    rects.enter().append("rect")
-        .attr("x", 0)
-        .attr("y", (d, i) => i * 50)
-        .attr("width", "100%")
-        .attr("height", 50)
+    rects.enter().append('rect')
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 50)
+        .attr('width', '100%')
+        .attr('height', 50)
       .merge(rects)
-        .attr("fill", d => d.color.rgb().toString());
+        .attr('fill', d => d.color.rgb().toString());
 
     // Medium swatches
     swatches = d3.select('#vizMediumSwatches');
     // Resize to fit
-    swatches.style("height", Math.ceil(c.length / 3) * 35 + 'px');
+    swatches.style('height', Math.ceil(c.length / 3) * 35 + 'px');
     // Update contents
-    rects = swatches.selectAll("rect")
+    rects = swatches.selectAll('rect')
         .data(c);
     rects.exit().remove();
-    rects.enter().append("rect")
-        .attr("x", (d, i) => (i % 3) * 35)
-        .attr("y", (d, i) => Math.floor(i / 3) * 35)
-        .attr("width", 30)
-        .attr("height", 30)
+    rects.enter().append('rect')
+        .attr('x', (d, i) => (i % 3) * 35)
+        .attr('y', (d, i) => Math.floor(i / 3) * 35)
+        .attr('width', 30)
+        .attr('height', 30)
       .merge(rects)
-        .attr("fill", d => d.color.rgb().toString());
+        .attr('fill', d => d.color.rgb().toString());
 
     // Small swatches
     swatches = d3.select('#vizSmallSwatches');
     // Resize to fit
-    swatches.style("height", Math.ceil(c.length / 3) * 35 + 'px');
+    swatches.style('height', Math.ceil(c.length / 3) * 35 + 'px');
     // Update contents
-    rects = swatches.selectAll("rect")
+    rects = swatches.selectAll('rect')
         .data(c);
     rects.exit().remove();
-    rects.enter().append("rect")
-        .attr("x", (d, i) => (i % 3) * 35 + 10)
-        .attr("y", (d, i) => Math.floor(i / 3) * 35 + 10)
-        .attr("width", 10)
-        .attr("height", 10)
+    rects.enter().append('rect')
+        .attr('x', (d, i) => (i % 3) * 35 + 10)
+        .attr('y', (d, i) => Math.floor(i / 3) * 35 + 10)
+        .attr('width', 10)
+        .attr('height', 10)
       .merge(rects)
-        .attr("fill", d => d.color.rgb().toString());
+        .attr('fill', d => d.color.rgb().toString());
 
     // Circle swatches
     swatches = d3.select('#vizCircles');
     // Resize to fit
-    swatches.style("height", Math.ceil(c.length / 3) * 35 + 'px');
+    swatches.style('height', Math.ceil(c.length / 3) * 35 + 'px');
     // Update contents
-    let circles = swatches.selectAll("circle")
+    let circles = swatches.selectAll('circle')
         .data(c);
     circles.exit().remove();
-    circles.enter().append("circle")
-        .attr("cx", (d, i) => (i % 3) * 35 + 15)
-        .attr("cy", (d, i) => Math.floor(i / 3) * 35 + 15)
-        .attr("r", 5)
-        .attr("fill", "none")
-        .attr("stroke-width", 2)
+    circles.enter().append('circle')
+        .attr('cx', (d, i) => (i % 3) * 35 + 15)
+        .attr('cy', (d, i) => Math.floor(i / 3) * 35 + 15)
+        .attr('r', 5)
+        .attr('fill', 'none')
+        .attr('stroke-width', 2)
       .merge(circles)
-        .attr("stroke", d => d.color.rgb().toString());
+        .attr('stroke', d => d.color.rgb().toString());
 
     // Line swatches
     swatches = d3.select('#vizLines');
     // Resize to fit
-    swatches.style("height", c.length * 20 + 'px');
+    swatches.style('height', c.length * 20 + 'px');
     // Update contents
-    rects = swatches.selectAll("rect")
+    rects = swatches.selectAll('rect')
         .data(c);
     rects.exit().remove();
-    rects.enter().append("rect")
-        .attr("x", 0)
-        .attr("y", (d, i) => i * 20)
-        .attr("width", "100%")
-        .attr("height", 2)
+    rects.enter().append('rect')
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 20)
+        .attr('width', '100%')
+        .attr('height', 2)
       .merge(rects)
-        .attr("fill", d => d.color.rgb().toString());
+        .attr('fill', d => d.color.rgb().toString());
 
     // Vertical line swatches for lightness visualization
     swatches = vizLightnessGray;
     // Update contents
-    rects = swatches.selectAll("rect")
+    rects = swatches.selectAll('rect')
         .data(c);
     rects.exit().remove();
-    rects.enter().append("rect")
-        .attr("y", 0)
-        .attr("width", 4)
-        .attr("height", 20)
+    rects.enter().append('rect')
+        .attr('y', 0)
+        .attr('width', 4)
+        .attr('height', 20)
         .call(d3.drag()
             .on('start', lineDragStarted)
             .on('drag', lineDragged)
@@ -292,19 +294,19 @@ function updateViz(cs, do_not_update_dots) {
         .on('mouseover', lineMouseOver)
         .on('mouseout', lineMouseOut)
       .merge(rects)
-        .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 2)
-        .attr("fill", d => d3.jab(d.color.J, 0, 0).rgb().toString())
-        .attr("id", (d, i) => 'grect' + i)
-        .attr("class", 'color-rect');
+        .attr('x', d => sliderScale(d.color.J) + sliderMargin.left - 2)
+        .attr('fill', d => d3.jab(d.color.J, 0, 0).rgb().toString())
+        .attr('id', (d, i) => 'grect' + i)
+        .attr('class', 'color-rect');
     swatches = vizLightnessColor;
     // Update contents
-    rects = swatches.selectAll("rect")
+    rects = swatches.selectAll('rect')
         .data(c);
     rects.exit().remove();
-    rects.enter().append("rect")
-        .attr("y", 0)
-        .attr("width", 4)
-        .attr("height", 20)
+    rects.enter().append('rect')
+        .attr('y', 0)
+        .attr('width', 4)
+        .attr('height', 20)
         .call(d3.drag()
             .on('start', lineDragStarted)
             .on('drag', lineDragged)
@@ -312,10 +314,10 @@ function updateViz(cs, do_not_update_dots) {
         .on('mouseover', lineMouseOver)
         .on('mouseout', lineMouseOut)
       .merge(rects)
-        .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 2)
-        .attr("fill", d => d.color.rgb().toString())
-        .attr("id", (d, i) => 'crect' + i)
-        .attr("class", 'color-rect');
+        .attr('x', d => sliderScale(d.color.J) + sliderMargin.left - 2)
+        .attr('fill', d => d.color.rgb().toString())
+        .attr('id', (d, i) => 'crect' + i)
+        .attr('class', 'color-rect');
 
     // Update output text area
     updateOutput();
@@ -326,11 +328,11 @@ function updateViz(cs, do_not_update_dots) {
         if (colorDots.style.cursor == 'crosshair')
             c = c.slice(0, c.length - 1);
         // Update contents
-        circles = swatches.selectAll("circle")
+        circles = swatches.selectAll('circle')
             .data(c);
         circles.exit().remove();
-        circles.enter().append("circle")
-            .attr("r", 5)
+        circles.enter().append('circle')
+            .attr('r', 5)
             .call(d3.drag()
                 .on('start', dotDragStarted)
                 .on('drag', dotDragged)
@@ -339,23 +341,23 @@ function updateViz(cs, do_not_update_dots) {
             .on('mouseout', dotMouseOut)
             .on('mousemove', d => d3.event.stopPropagation())
           .merge(circles)
-            .attr("cx", d => (d.color.a + 50) / 100 * canvas.width)
-            .attr("cy", d => canvas.height - (d.color.b + 50) / 100 *
+            .attr('cx', d => (d.color.a + 50) / 100 * canvas.width)
+            .attr('cy', d => canvas.height - (d.color.b + 50) / 100 *
                 canvas.height)
-            .attr("fill", d => d.color.rgb().toString())
-            .attr("stroke", d => d.tooClose ? "#800" : "none")
-            .attr("stroke-width", d => d.tooClose ? "3" : "0")
-            .attr("id", (d, i) => 'colordot' + i)
-            .attr("class", 'color-dot');
+            .attr('fill', d => d.color.rgb().toString())
+            .attr('stroke', d => d.tooClose ? '#800' : 'none')
+            .attr('stroke-width', d => d.tooClose ? '3' : '0')
+            .attr('id', (d, i) => 'colordot' + i)
+            .attr('class', 'color-dot');
     }
 }
 
 // Event handlers for dragging color dots on gamut visualization
 function dotDragStarted(d) {
-    d3.select(this).attr("stroke-width", "3");
+    d3.select(this).attr('stroke-width', '3');
 }
 function dotDragged(d) {
-    d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+    d3.select(this).attr('cx', d.x = d3.event.x).attr('cy', d.y = d3.event.y);
     dragUpdate(d, this, this.id.slice(8), 'dot', true);
 }
 function dotDragEnded(d) {
@@ -365,12 +367,12 @@ function dotDragEnded(d) {
 // Event handlers for dragging color line below gamut visualization
 function lineDragStarted(d) {
     const idx = this.id.slice(5);
-    d3.select('#colordot' + idx).attr("stroke-width", "3");
+    d3.select('#colordot' + idx).attr('stroke-width', '3');
 }
 function lineDragged(d) {
     const idx = this.id.slice(5);
-    d3.select('#grect' + idx).attr("x", d.x = d3.event.x);
-    d3.select('#crect' + idx).attr("x", d.x = d3.event.x);
+    d3.select('#grect' + idx).attr('x', d.x = d3.event.x);
+    d3.select('#crect' + idx).attr('x', d.x = d3.event.x);
     dragUpdate(d, this, this.id.slice(5), 'line', true);
 }
 function lineDragEnded(d) {
@@ -402,19 +404,19 @@ function dragUpdate(d, _this, idx, type, ignoreColor) {
 
     if (ignoreColor) {
         // Update dot
-        d3.select('#colordot' + idx).attr("fill", c.base[0].rgb().toString());
+        d3.select('#colordot' + idx).attr('fill', c.base[0].rgb().toString());
 
         configChange(true, true);
 
         // Visualize colors that are too close
         for (let i = 0; i < colors.length; i++) {
             if (i == idx)
-                d3.select('#colordot' + idx).attr("stroke",
-                    colors[i].tooClose ? '#800' : "#fff");
+                d3.select('#colordot' + idx).attr('stroke',
+                    colors[i].tooClose ? '#800' : '#fff');
             else
                 d3.select('#colordot' + i)
-                  .attr("stroke", colors[i].tooClose ? "#800" : "none")
-                  .attr("stroke-width", colors[i].tooClose ? "3" : "0");
+                  .attr('stroke', colors[i].tooClose ? '#800' : 'none')
+                  .attr('stroke-width', colors[i].tooClose ? '3' : '0');
         }
 
         colors[idx].ignore = true;

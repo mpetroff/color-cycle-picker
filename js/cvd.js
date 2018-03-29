@@ -50,6 +50,8 @@
  * SOFTWARE.
  */
 
+'use strict';
+
 function cvd_forward(rgb, cvd_type, severity) {
     const mat = machado_et_al_2009_matrix(cvd_type, severity);
     rgb = [rgb.r, rgb.g, rgb.b].map(n => n / 255);
@@ -86,7 +88,7 @@ function machado_et_al_2009_matrix(cvd_type, severity) {
 }
 
 const MACHADO_ET_AL_MATRICES = {
-    "protanomaly": {
+    'protanomaly': {
       0: [
           [ 1.000000,  0.000000, -0.000000],
           [ 0.000000,  1.000000,  0.000000],
@@ -143,7 +145,7 @@ const MACHADO_ET_AL_MATRICES = {
           [-0.003882, -0.048116,  1.051998],
          ],
     },
-    "deuteranomaly": {
+    'deuteranomaly': {
       0: [
           [ 1.000000,  0.000000, -0.000000],
           [ 0.000000,  1.000000,  0.000000],
@@ -201,7 +203,7 @@ const MACHADO_ET_AL_MATRICES = {
          ],
     },
 
-    "tritanomaly": {
+    'tritanomaly': {
       0: [
           [ 1.000000,  0.000000, -0.000000],
           [ 0.000000,  1.000000,  0.000000],

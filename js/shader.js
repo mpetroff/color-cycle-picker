@@ -21,6 +21,10 @@
  * THE SOFTWARE.
  */
 
+'use strict';
+
+let gl, program;
+
 // Initialize WebGL canvas
 function webglInit(canvas) {
     gl = canvas.getContext('experimental-webgl', {
@@ -32,12 +36,12 @@ function webglInit(canvas) {
     gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
     // Create vertex shader
-    vs = gl.createShader(gl.VERTEX_SHADER);
+    const vs = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vs, vertexShader);
     gl.compileShader(vs);
 
     // Create fragment shader
-    fs = gl.createShader(gl.FRAGMENT_SHADER);
+    const fs = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fs, fragmentShader);
     gl.compileShader(fs);
 
