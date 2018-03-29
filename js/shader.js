@@ -76,7 +76,7 @@ function webglRender(J, ignoreLightness) {
     let u = gl.getUniformLocation(program, 'u_J');
     gl.uniform1f(u, J);
 
-    if (ignoreLightness || minLightnessDist(J) >
+    if (ignoreLightness || minLightnessDist(J) >=
         Number(document.getElementById('lightDistInput').value)) {
         // Set existing colors
         let colorArrays = {};

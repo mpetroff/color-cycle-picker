@@ -461,8 +461,8 @@ function addColor(jab) {
 
     const c = jab.rgb();
 
-    if (minDist(jab) > Number(document.getElementById('colorDistInput').value) &&
-        minLightnessDist(jab.J) >
+    if (minDist(jab) >= Number(document.getElementById('colorDistInput').value) &&
+        minLightnessDist(jab.J) >=
         Number(document.getElementById('lightDistInput').value) &&
         c.displayable()) {
         let cs = calcCVD(jab);
