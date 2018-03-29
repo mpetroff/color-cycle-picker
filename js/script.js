@@ -481,7 +481,7 @@ d3.select('#colorDots').on('mousemove', function() {
 });
 
 // Add a given color to swatch list
-function addColor(jab) {
+function addColor(jab, add_anyway) {
     if (colors.length >= 12) {
         alert('Only 12 colors are supported (due to WebGL limitations)!');
         return;
@@ -489,10 +489,10 @@ function addColor(jab) {
 
     const c = jab.rgb();
 
-    if (minDist(jab) >= Number(document.getElementById('colorDistInput').value) &&
+    if ((minDist(jab) >= Number(document.getElementById('colorDistInput').value) &&
         minLightnessDist(jab.J) >=
         Number(document.getElementById('lightDistInput').value) &&
-        c.displayable()) {
+        c.displayable()) || add_anyway) {
         let cs = calcCVD(jab);
         cs.tooClose = false;
         colors.push(cs);
@@ -625,8 +625,9 @@ document.getElementById('colorAdd').addEventListener('click', function() {
         if (jab.J < sliderScale.domain()[0] || jab.J > sliderScale.domain()[1]) {
             alert("Color's lightness is out of range!");
         } else {
-            addColor(jab);
+            addColor(jab, true);
             colorInput.value = '';
+            configChange(false, false);
         }
     } else {
         alert('Invalid color specifier!');
