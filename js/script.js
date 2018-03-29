@@ -354,14 +354,19 @@ function updateViz(cs, do_not_update_dots) {
 
 // Event handlers for dragging color dots on gamut visualization
 function dotDragStarted(d) {
-    d3.select(this).attr('stroke-width', '3');
+    const idx = this.id.slice(8);
+    d3.select(this).attr('stroke-width', '3')
+      .attr('stroke', colors[idx].tooClose ? '#800' : '#fff');
+    colors[idx].ignore = true;
+    webglRender(colors[idx].base[0].J, true);
+    colors[idx].ignore = false;
 }
 function dotDragged(d) {
     d3.select(this).attr('cx', d.x = d3.event.x).attr('cy', d.y = d3.event.y);
-    dragUpdate(d, this, this.id.slice(8), 'dot', true);
+    dragUpdate(d, this, this.id.slice(8), 'dot', true, false);
 }
 function dotDragEnded(d) {
-    dragUpdate(d, this, this.id.slice(8), 'dot', false);
+    dragUpdate(d, this, this.id.slice(8), 'dot', false, true);
 }
 
 // Event handlers for dragging color line below gamut visualization
@@ -373,14 +378,14 @@ function lineDragged(d) {
     const idx = this.id.slice(5);
     d3.select('#grect' + idx).attr('x', d.x = d3.event.x);
     d3.select('#crect' + idx).attr('x', d.x = d3.event.x);
-    dragUpdate(d, this, this.id.slice(5), 'line', true);
+    dragUpdate(d, this, this.id.slice(5), 'line', true, true);
 }
 function lineDragEnded(d) {
-    dragUpdate(d, this, this.id.slice(5), 'line', false);
+    dragUpdate(d, this, this.id.slice(5), 'line', false, true);
 }
 
 // Main drag update function
-function dragUpdate(d, _this, idx, type, ignoreColor) {
+function dragUpdate(d, _this, idx, type, ignoreColor, do_render) {
     const elem = document.getElementById('color' +
         colorToHex(colors[idx].base[0].rgb()).slice(1));
 
@@ -419,9 +424,11 @@ function dragUpdate(d, _this, idx, type, ignoreColor) {
                   .attr('stroke-width', colors[i].tooClose ? '3' : '0');
         }
 
-        colors[idx].ignore = true;
-        webglRender(c.base[0].J, true);
-        colors[idx].ignore = false;
+        if (do_render) {
+            colors[idx].ignore = true;
+            webglRender(c.base[0].J, true);
+            colors[idx].ignore = false;
+        }
     } else {
         configChange(true, false);
     }
