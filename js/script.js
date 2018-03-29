@@ -607,4 +607,5 @@ document.getElementById('colorAdd').addEventListener('click', function() {
 
 // Initialize visualization
 webglInit(canvas);
-adjustSlider(60); // Sets initial lightness and renders visualization
+adjustSlider(60);   // Sets initial lightness and renders visualization
+updateOutput();     // Clears output on page refresh
