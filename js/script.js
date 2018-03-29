@@ -337,6 +337,7 @@ function updateViz(cs, do_not_update_dots) {
                 .on('end', dotDragEnded))
             .on('mouseover', dotMouseOver)
             .on('mouseout', dotMouseOut)
+            .on('mousemove', d => d3.event.stopPropagation())
           .merge(circles)
             .attr("cx", d => (d.color.a + 50) / 100 * canvas.width)
             .attr("cy", d => canvas.height - (d.color.b + 50) / 100 *
@@ -426,16 +427,30 @@ function dragUpdate(d, _this, idx, type, ignoreColor) {
 
 // Highlight color in swatch list when mousing over color in gamut visualization
 function dotMouseOver(d) {
-    swatchHighlight(this.id.slice(8), true);
+    const idx = this.id.slice(8);
+    swatchHighlight(idx, true);
+    d3.select('#grect' + idx)
+      .attr('fill', colors[idx].base[0].rgb().brighter().toString());
 }
 function dotMouseOut(d) {
-    swatchHighlight(this.id.slice(8), false);
+    const idx = this.id.slice(8);
+    swatchHighlight(idx, false);
+    d3.select('#grect' + idx)
+      .attr('fill', d3.jab(colors[idx].base[0].J, 0, 0).rgb().toString());
 }
 function lineMouseOver(d) {
-    swatchHighlight(this.id.slice(5), true);
+    const idx = this.id.slice(5);
+    swatchHighlight(idx, true);
+    d3.select('#colordot' + idx)
+      .attr('stroke', '#fff')
+      .attr('stroke-width', '3');
 }
 function lineMouseOut(d) {
-    swatchHighlight(this.id.slice(5), false);
+    const idx = this.id.slice(5);
+    swatchHighlight(idx, false);
+    d3.select('#colordot' + idx)
+      .attr('stroke', colors[idx].tooClose ? '#800' : 'none')
+      .attr('stroke-width', colors[idx].tooClose ? '3' : '0');
 }
 function swatchHighlight(idx, highlight) {
     const elem = document.getElementById('color' + colorToHex(
