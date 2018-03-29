@@ -503,15 +503,40 @@ function addColor(jab, add_anyway) {
             jab.rgb().toString() + '">&#x2588;&#x2588;&#x2588;&#x2588;</span><span>' +
             colorToHex(jab.rgb()) +
             '</span><span class="swatchButtons"><span class="js-remove">&#x2716;</span></span>';
-
         li.dataset.color = jab;
         li.id = 'color' + colorToHex(c).slice(1);
+        li.addEventListener('mouseenter', swatchMouseEnter);
+        li.addEventListener('mouseleave', swatchMouseLeave);
         swatchList.appendChild(li);
 
         updateViz(colors);
 
         render();
         canvas.style.cursor = 'default';
+    }
+}
+
+// Highlight color in gamut visualization when mousing over swatch list
+function swatchMouseEnter(e) {
+    for (let i = 0; i < colors.length; i++) {
+        if (colors[i].base[0] == e.target.dataset.color) {
+            d3.select('#colordot' + i)
+              .attr('stroke', '#fff')
+              .attr('stroke-width', '3');
+            d3.select('#grect' + i)
+              .attr('fill', colors[i].base[0].rgb().brighter().toString());
+        }
+    }
+}
+function swatchMouseLeave(e) {
+    for (let i = 0; i < colors.length; i++) {
+        if (colors[i].base[0] == e.target.dataset.color) {
+            d3.select('#colordot' + i)
+              .attr('stroke', colors[i].tooClose ? '#800' : 'none')
+              .attr('stroke-width', colors[i].tooClose ? '3' : '0');
+            d3.select('#grect' + i)
+              .attr('fill', d3.jab(colors[i].base[0].J, 0, 0).rgb().toString());
+        }
     }
 }
 
