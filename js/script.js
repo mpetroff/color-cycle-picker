@@ -289,6 +289,8 @@ function updateViz(cs, do_not_update_dots) {
             .on('start', lineDragStarted)
             .on('drag', lineDragged)
             .on('end', lineDragEnded))
+        .on('mouseover', lineMouseOver)
+        .on('mouseout', lineMouseOut)
       .merge(rects)
         .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 2)
         .attr("fill", d => d3.jab(d.color.J, 0, 0).rgb().toString())
@@ -307,6 +309,8 @@ function updateViz(cs, do_not_update_dots) {
             .on('start', lineDragStarted)
             .on('drag', lineDragged)
             .on('end', lineDragEnded))
+        .on('mouseover', lineMouseOver)
+        .on('mouseout', lineMouseOut)
       .merge(rects)
         .attr("x", d => sliderScale(d.color.J) + sliderMargin.left - 2)
         .attr("fill", d => d.color.rgb().toString())
@@ -331,6 +335,8 @@ function updateViz(cs, do_not_update_dots) {
                 .on('start', dotDragStarted)
                 .on('drag', dotDragged)
                 .on('end', dotDragEnded))
+            .on('mouseover', dotMouseOver)
+            .on('mouseout', dotMouseOut)
           .merge(circles)
             .attr("cx", d => (d.color.a + 50) / 100 * canvas.width)
             .attr("cy", d => canvas.height - (d.color.b + 50) / 100 *
@@ -416,6 +422,28 @@ function dragUpdate(d, _this, idx, type, ignoreColor) {
     } else {
         configChange(true, false);
     }
+}
+
+// Highlight color in swatch list when mousing over color in gamut visualization
+function dotMouseOver(d) {
+    swatchHighlight(this.id.slice(8), true);
+}
+function dotMouseOut(d) {
+    swatchHighlight(this.id.slice(8), false);
+}
+function lineMouseOver(d) {
+    swatchHighlight(this.id.slice(5), true);
+}
+function lineMouseOut(d) {
+    swatchHighlight(this.id.slice(5), false);
+}
+function swatchHighlight(idx, highlight) {
+    const elem = document.getElementById('color' + colorToHex(
+        colors[idx].base[0].rgb()).slice(1));
+    if (highlight)
+        elem.classList.add('list-group-item-hover');
+    else
+        elem.classList.remove('list-group-item-hover');
 }
 
 // Add color when clicking on gamut visualization

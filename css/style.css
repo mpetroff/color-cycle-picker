@@ -72,3 +72,10 @@ body {
 footer {
   font-size: 14px;
 }
+
+/* For triggering Bootstrap list group hover style via JavaScript */
+.list-group-item-hover {
+    color: #495057;
+    text-decoration: none;
+    background-color: #f8f9fa;
+}
