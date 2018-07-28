@@ -1,5 +1,7 @@
 # Color Cycle Picker
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1323088.svg)](https://doi.org/10.5281/zenodo.1323088)
+
 ## About
 
 This tool was developed in an effort to promote the development of colorblind-friendly color cycles for scientific visualization. It allows colors to be picked from a CAM02-UCS color gamut, which is perceptually uniform, and assembled into a color cycle. A minimum perceptual distance is enforced between the colors in the cycle, both for normal and anomalous trichromats. This is accomplished by performing color vision deficiency simulations for various types of deficiencies and enforcing a minimum perceptual difference for the simulated colors (each type of deficiency is treated separately).
